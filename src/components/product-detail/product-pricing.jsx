@@ -123,7 +123,7 @@ export default function ProductPricing({
                                     {/* {isLoading ? (
                                         <span className="animate-pulse">Loading...</span>
                                     ) : ( */}
-                                        ${shippingDays.regular} working days*
+                                        ${shippingDays?.regular} working days*
                                     {/* // )} */}
                                 </div>
                                 <div className="text-sm font-bold text-gray-600 inline-block mt-1">Free shipping</div>
@@ -142,14 +142,14 @@ export default function ProductPricing({
                                         {/* {isLoading ? (
                                             <span className="animate-pulse">Loading...</span>
                                         ) : ( */}
-                                        ${shippingDays.express} working days*
+                                        ${shippingDays?.express} working days*
                                     {/* )} */}
                                 </div>
                                 <div className="text-sm font-bold text-purple-600 inline-block mt-1">
                                     {/* {isLoading ? ( */}
                                     {/* <span className="animate-pulse">Loading...</span>
                                     ) : shippingCost?.costPerPiece > 0 ? ( */}
-                                    +${shippingCost.costPerPiece}€ / piece
+                                    +${shippingCost?.costPerPiece}€ / piece
                                     {/* ) : (
                                         "Contact us"
                                     )} */}
