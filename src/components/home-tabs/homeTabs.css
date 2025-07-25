@@ -1,0 +1,298 @@
+/* Tabs + Pie chart */
+.featured-tabs {
+    max-width: 1400px;
+    padding: 45px;
+    background: #fff;
+    border-radius: 12px;
+    margin-left: auto;
+    margin-right: auto;
+    overflow: hidden;
+  }
+  .featured-tabs .tabs {
+    display: flex;
+    position: relative;
+    justify-content: space-between;
+  }
+  .featured-tabs .tab-content {
+    padding: 50px 0;
+  }
+  .featured-tabs .tab-pane {
+    color: #333;
+    display: none;
+  }
+  .featured-tabs .tab-pane.active {
+    display: flex;
+  }
+  .featured-tabs .tabs-inner {
+    display: flex;
+    flex-direction: row;
+    column-gap: 100px;
+  }
+  .right-inner-tab {
+    width: 55%;
+    box-sizing: border-box;
+    position: relative;
+  }
+  .left-inner-tab {
+    width: 45%;
+    box-sizing: border-box;
+    position: relative;
+  }
+  .right-inner-tab img {
+    max-width: 80%;
+    height: auto;
+    float: right;
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    border-radius: 6px;
+  }
+  .circle_bg {
+    position: absolute;
+    left: -95px;
+    bottom: 53px;
+  }
+  .featured-tabs .tabs .line {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 6px;
+    border-radius: 15px;
+    background-color: #723fbf;
+    transition: all 0.2s ease;
+  }
+  .featured-tabs .tab-item {
+    min-width: 80px;
+    padding: 16px 20px 11px 20px;
+    font-size: 20px;
+    text-align: center;
+    color: #202020;
+    background-color: #fff;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-bottom: 5px solid transparent;
+    opacity: 0.6;
+    cursor: pointer;
+    transition: all 0.5s ease;
+    border-color: #acacac;
+  }
+  .featured-tabs .tab-item:hover {
+    opacity: 1;
+  }
+  .featured-tabs .tab-item.active {
+    opacity: 1;
+  }
+  .featured-tabs .tab-item:first-child::before {
+    content: "";
+    position: relative;
+    top: -15px;
+    background-image: url(https://funpromotion.gr/wp-content/uploads/logos/2024/10/brand.png);
+    background-repeat: no-repeat;
+    width: 60px;
+    height: 60px;
+    background-size: contain;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .featured-tabs .tab-item:first-child:hover::before {
+    background-image: url(https://funpromotion.gr/wp-content/uploads/logos/2024/10/brand-hover.png);
+  }
+  .featured-tabs .tab-item:first-child.active::before {
+    background-image: url(https://funpromotion.gr/wp-content/uploads/logos/2024/10/brand-hover.png);
+  }
+  .featured-tabs .tab-item:nth-child(2)::before {
+    content: "";
+    position: relative;
+    top: -15px;
+    background-image: url(https://funpromotion.gr/wp-content/uploads/logos/2024/10/loyalty.png);
+    background-repeat: no-repeat;
+    width: 60px;
+    height: 60px;
+    background-size: contain;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .featured-tabs .tab-item:nth-child(2):hover::before {
+    background-image: url(https://funpromotion.gr/wp-content/uploads/logos/2024/10/loyalty-hover.png);
+  }
+  .featured-tabs .tab-item:nth-child(2).active::before {
+    background-image: url(https://funpromotion.gr/wp-content/uploads/logos/2024/10/loyalty-hover.png);
+  }
+  .featured-tabs .tab-item:nth-child(3)::before {
+    content: "";
+    position: relative;
+    top: -15px;
+    background-image: url(https://funpromotion.gr/wp-content/uploads/logos/2024/10/care.png);
+    background-repeat: no-repeat;
+    width: 60px;
+    height: 60px;
+    background-size: contain;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .featured-tabs .tab-item:nth-child(3):hover::before {
+    background-image: url(https://funpromotion.gr/wp-content/uploads/logos/2024/10/care-hover.png);
+  }
+  .featured-tabs .tab-item:nth-child(3).active::before {
+    background-image: url(https://funpromotion.gr/wp-content/uploads/logos/2024/10/care-hover.png);
+  }
+  .featured-tabs .tab-item:nth-child(4)::before {
+    content: "";
+    position: relative;
+    top: -15px;
+    background-image: url(https://funpromotion.gr/wp-content/uploads/logos/2024/10/innovation.png);
+    background-repeat: no-repeat;
+    width: 60px;
+    height: 60px;
+    background-size: contain;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .featured-tabs .tab-item:nth-child(4):hover::before {
+    background-image: url(https://funpromotion.gr/wp-content/uploads/logos/2024/10/innovation-hover.png);
+  }
+  .featured-tabs .tab-item:nth-child(4).active::before {
+    background-image: url(https://funpromotion.gr/wp-content/uploads/logos/2024/10/innovation-hover.png);
+  }
+  .featured-tabs .tab-item:nth-child(5)::before {
+    content: "";
+    position: relative;
+    top: -15px;
+    background-image: url(https://funpromotion.gr/wp-content/uploads/logos/2024/10/social.png);
+    background-repeat: no-repeat;
+    width: 60px;
+    height: 60px;
+    background-size: contain;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .featured-tabs .tab-item:nth-child(5):hover::before {
+    background-image: url(https://funpromotion.gr/wp-content/uploads/logos/2024/10/social-hover.png);
+  }
+  .featured-tabs .tab-item:nth-child(5).active::before {
+    background-image: url(https://funpromotion.gr/wp-content/uploads/logos/2024/10/social-hover.png);
+  }
+  .featured-tabs .tab-item:nth-child(6)::before {
+    content: "";
+    position: relative;
+    top: -15px;
+    background-image: url(https://funpromotion.gr/wp-content/uploads/logos/2024/10/events.png);
+    background-repeat: no-repeat;
+    width: 60px;
+    height: 60px;
+    background-size: contain;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .featured-tabs .tab-item:nth-child(6):hover::before {
+    background-image: url(https://funpromotion.gr/wp-content/uploads/logos/2024/10/events-hover.png);
+  }
+  .featured-tabs .tab-item:nth-child(6).active::before {
+    background-image: url(https://funpromotion.gr/wp-content/uploads/logos/2024/10/events-hover.png);
+  }
+  .featured-tabs .tab-pane h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+  .featured-tabs .left-inner-tab p {
+    font-size: 15px;
+  }
+  
+  /* Pie Chart Styles */
+  .pie-container {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    bottom: 50px;
+    left: -50px;
+  }
+  
+  .pie-chart {
+    width: 250px;
+    height: 250px;
+    overflow: visible !important;
+  }
+  
+  .circle-bg {
+    fill: none;
+    stroke: #e6e6e6;
+    stroke-width: 6;
+    stroke-dasharray: 40, 50;
+    stroke-linecap: round;
+  }
+  
+  .circle {
+    fill: none;
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke: rgb(103, 50, 183);
+    transition: stroke-dasharray 0.6s ease, stroke 0.6s ease;
+  }
+  .percentage-text {
+    position: absolute;
+    bottom: -70px;
+    left: -20px;
+    font-size: 40px;
+    max-width: 150px;
+  }
+  .percentage-text #percentage {
+    font-size: 80px;
+  }
+  #percentage-description {
+    font-size: 18px;
+    color: #333;
+    margin-top: -15px;
+    font-weight: 600;
+  }
+  
+  /* TABLET DEVICES */
+  /* Tabs + Pie chart */
+  @media (min-width: 768px) and (max-width: 1023.98px) {
+      .featured-tabs .tabs-inner {
+        flex-direction: column;
+      }
+      .left-inner-tab {
+        width: 100%;
+      }
+      .right-inner-tab {
+        width: 100%;
+      }
+      .right-inner-tab img {
+            max-width: 50%;
+      }
+      .pie-container {
+        left: 30px;
+      }
+      .circle_bg {
+        left: -15px;
+      }
+  }
+  /* MOBILE DEVICES */
+  /* Tabs + Pie chart */
+  @media (max-width: 767.98px) {
+      .featured-tabs .tabs-inner {
+        flex-direction: column;
+      }
+      .left-inner-tab {
+        width: 100%;
+      }
+      .right-inner-tab {
+        width: 100%;
+      }
+      .right-inner-tab img {
+            max-width: 50%;
+      }
+      .pie-container {
+        bottom: unset;
+            left: 20px;
+      }
+      .circle_bg {
+        left: -15px;
+      }
+  }

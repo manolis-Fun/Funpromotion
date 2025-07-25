@@ -1,0 +1,229 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "slick-carousel/slick/slick.css";
+@import "slick-carousel/slick/slick-theme.css";
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+:root {
+    --background: #ffffff;
+    --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* --background: #0a0a0a; */
+        --foreground: #ededed;
+    }
+}
+
+@layer components {
+    /* Trusted Logos Slider Animation */
+    @keyframes scroll {
+        0% {
+            transform: translateX(0);
+        }
+        100% {
+            transform: translateX(-50%);
+        }
+    }
+
+    /* Navbar Modal Animation */
+    @keyframes slideDown {
+        0% {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeIn {
+        0% {
+            opacity: 0;
+        }
+        100% {
+            opacity: 1;
+        }
+    }
+
+    .modal-enter {
+        animation: slideDown 0.3s ease forwards;
+    }
+
+    .modal-content-enter {
+        animation: fadeIn 0.4s ease forwards;
+    }
+
+    .animate-scroll {
+        display: flex;
+        width: max-content;
+        animation: scroll 20s linear infinite;
+    }
+
+    /* Hide scrollbar for logo slider */
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .manrope-font {
+        font-family: "Manrope", sans-serif;
+        font-optical-sizing: auto;
+        font-style: normal;
+    }
+
+    /* Custom Inter style with specific properties */
+    .inter-style {
+        font-family: "Inter", Arial, Helvetica, sans-serif;
+        font-style: normal;
+    }
+}
+
+@keyframes scroll {
+    0% {
+        transform: translateX(0%);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+.animate-scroll {
+    animation: scroll 20s linear infinite;
+}
+
+/* Custom Swiper Styles for Category Banner */
+.category-banner-swiper {
+    padding-bottom: 32px;
+}
+
+.category-banner-swiper .swiper-slide {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px 0 rgba(60, 60, 60, 0.04);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 20px;
+    min-height: 120px;
+    transition: box-shadow 0.2s;
+}
+
+.category-banner-swiper .swiper-slide .text-xl {
+    color: #222;
+    font-size: 2rem;
+    margin-right: 12px;
+}
+
+.category-banner-swiper .swiper-slide p {
+    color: #222;
+    margin: 0;
+}
+
+.category-banner-swiper .swiper-slide .font-semibold {
+    font-size: 1.08rem;
+    font-weight: 600;
+}
+
+.category-banner-swiper .swiper-slide .text-sm {
+    font-size: 0.98rem;
+    color: #222;
+    opacity: 0.7;
+}
+
+.category-banner-swiper .swiper-button-next,
+.category-banner-swiper .swiper-button-prev {
+    width: 40px;
+    height: 40px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px 0 rgba(60, 60, 60, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #222;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.category-banner-swiper .swiper-button-next {
+    right: -20px;
+}
+.category-banner-swiper .swiper-button-prev {
+    left: -20px;
+}
+
+.category-banner-swiper .swiper-button-next:hover,
+.category-banner-swiper .swiper-button-prev:hover {
+    box-shadow: 0 4px 16px 0 rgba(60, 60, 60, 0.12);
+    border-color: #bdbdbd;
+}
+
+.category-banner-swiper .swiper-button-next:after,
+.category-banner-swiper .swiper-button-prev:after {
+    font-size: 1.3rem;
+    color: #222;
+}
+
+.category-banner-swiper .swiper-pagination {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+}
+
+.category-banner-swiper .swiper-pagination-bullet {
+    width: 8px;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.category-banner-swiper .swiper-pagination-bullet-active {
+    background: #222;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 768px) {
+    .category-banner-swiper .swiper-button-prev {
+        left: -10px;
+    }
+
+    .category-banner-swiper .swiper-button-next {
+        right: -10px;
+    }
+
+    .category-banner-swiper .swiper-button-prev,
+    .category-banner-swiper .swiper-button-next {
+        width: 32px;
+        height: 32px;
+    }
+    .category-banner-swiper .swiper-slide {
+        padding: 16px 8px;
+        min-height: 90px;
+    }
+}
+
+/* Category Banner Swiper Custom Spacing */
+.category-banner-swiper .swiper-slide {
+    margin-right: 10px !important;
+    padding: 8px !important;
+}

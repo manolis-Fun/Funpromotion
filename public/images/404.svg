@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="400" viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- First 4 -->
+    <g transform="translate(100,0)">
+        <path d="M120 0L0 300V400H40V300H120V400H160V0H120ZM40 260V80L100 260H40Z" fill="#333333" />
+    </g>
+    <!-- 0 -->
+    <g transform="translate(300,0)">
+        <path
+            d="M160 400H120V360C120 320 100 300 60 300H40C0 300 0 260 0 260V40C0 0 40 0 40 0H120C160 0 160 40 160 40V400ZM40 40V260H120V40H40Z"
+            fill="#333333" />
+    </g>
+    <!-- Second 4 -->
+    <g transform="translate(500,0)">
+        <path d="M120 0L0 300V400H40V300H120V400H160V0H120ZM40 260V80L100 260H40Z" fill="#333333" />
+    </g>
+    <!-- Shadow effect -->
+    <g opacity="0.1">
+        <path d="M120 20L20 280V380H50V280H120V380H150V20H120ZM50 240V100L100 240H50Z"
+            transform="translate(100,20)" fill="#000000" />
+        <path
+            d="M150 380H110V350C110 310 90 290 50 290H30C0 290 0 250 0 250V50C0 10 30 10 30 10H110C150 10 150 50 150 50V380ZM30 50V250H110V50H30Z"
+            transform="translate(300,20)" fill="#000000" />
+        <path d="M120 20L20 280V380H50V280H120V380H150V20H120ZM50 240V100L100 240H50Z"
+            transform="translate(500,20)" fill="#000000" />
+    </g>
+</svg> 
