@@ -120,11 +120,11 @@ export default function ProductPricing({
                             <div className="flex-1 min-w-0">
                                 <div className="font-semibold text-gray-800">Regular Delivery</div>
                                 <div className="text-sm text-gray-500">
-                                    {isLoading ? (
+                                    {/* {isLoading ? (
                                         <span className="animate-pulse">Loading...</span>
-                                    ) : (
-                                        `${shippingDays.regular} working days*`
-                                    )}
+                                    ) : ( */}
+                                        ${shippingDays.regular} working days*
+                                    {/* // )} */}
                                 </div>
                                 <div className="text-sm font-bold text-gray-600 inline-block mt-1">Free shipping</div>
                             </div>
@@ -139,20 +139,20 @@ export default function ProductPricing({
                             <div className="flex-1 min-w-0">
                                 <div className="font-semibold text-gray-800">Express Delivery</div>
                                 <div className="text-sm text-gray-500">
-                                    {isLoading ? (
-                                        <span className="animate-pulse">Loading...</span>
-                                    ) : (
-                                        `${shippingDays.express} working days*`
-                                    )}
+                                        {/* {isLoading ? (
+                                            <span className="animate-pulse">Loading...</span>
+                                        ) : ( */}
+                                        ${shippingDays.express} working days*
+                                    {/* )} */}
                                 </div>
                                 <div className="text-sm font-bold text-purple-600 inline-block mt-1">
-                                    {isLoading ? (
-                                        <span className="animate-pulse">Loading...</span>
-                                    ) : shippingCost?.costPerPiece > 0 ? (
-                                        `+${shippingCost.costPerPiece}€ / piece`
-                                    ) : (
+                                    {/* {isLoading ? ( */}
+                                    {/* <span className="animate-pulse">Loading...</span>
+                                    ) : shippingCost?.costPerPiece > 0 ? ( */}
+                                    +${shippingCost.costPerPiece}€ / piece
+                                    {/* ) : (
                                         "Contact us"
-                                    )}
+                                    )} */}
                                 </div>
                             </div>
                         </div>
