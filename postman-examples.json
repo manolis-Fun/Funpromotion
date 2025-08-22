@@ -1,0 +1,261 @@
+{
+  "info": {
+    "name": "Funpromotion Search API",
+    "description": "Example requests for the Elasticsearch search endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Basic Search - GET",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/search?q=mug&page=1&size=12",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "search"],
+          "query": [
+            {
+              "key": "q",
+              "value": "mug",
+              "description": "Search query"
+            },
+            {
+              "key": "page",
+              "value": "1",
+              "description": "Page number (default: 1)"
+            },
+            {
+              "key": "size",
+              "value": "12",
+              "description": "Results per page (default: 12)"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Filtered Search - GET",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/search?q=promotional&category=mugs&brand=brandname&min_price=5&max_price=50&colors=red,blue&sort=price_asc&page=1&size=20",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "search"],
+          "query": [
+            {
+              "key": "q",
+              "value": "promotional",
+              "description": "Search term"
+            },
+            {
+              "key": "category",
+              "value": "mugs",
+              "description": "Product category slug"
+            },
+            {
+              "key": "brand",
+              "value": "brandname",
+              "description": "Brand name"
+            },
+            {
+              "key": "min_price",
+              "value": "5",
+              "description": "Minimum price"
+            },
+            {
+              "key": "max_price",
+              "value": "50",
+              "description": "Maximum price"
+            },
+            {
+              "key": "colors",
+              "value": "red,blue",
+              "description": "Comma-separated color list"
+            },
+            {
+              "key": "custom_tags",
+              "value": "eco-friendly,bestseller",
+              "description": "Comma-separated custom tags"
+            },
+            {
+              "key": "sort",
+              "value": "price_asc",
+              "description": "Sort options: relevant, price_asc, price_desc, newest, name_asc"
+            },
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "size",
+              "value": "20"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Advanced Search - POST",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"query\": \"promotional products\",\n  \"filters\": {\n    \"categories\": [\"mugs\", \"t-shirts\", \"pens\"],\n    \"brands\": [\"Brand A\", \"Brand B\"],\n    \"colors\": [\"red\", \"blue\", \"white\"],\n    \"custom_tags\": [\"eco-friendly\", \"bestseller\"],\n    \"price_min\": 5.0,\n    \"price_max\": 100.0\n  },\n  \"sort\": \"relevant\",\n  \"page\": 1,\n  \"size\": 24,\n  \"priceHistogram\": true\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/search",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "search"]
+        }
+      }
+    },
+    {
+      "name": "Search with Price Histogram - POST",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"query\": \"mug\",\n  \"filters\": {\n    \"categories\": [\"drinkware\"],\n    \"price_min\": 1.0,\n    \"price_max\": 25.0\n  },\n  \"sort\": \"price_asc\",\n  \"page\": 1,\n  \"size\": 12,\n  \"priceHistogram\": true\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/search",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "search"]
+        }
+      }
+    },
+    {
+      "name": "SearchKit Multi-search - POST",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-ndjson"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"index\": \"woocommerce_products_2025-08-09_09-19\"}\n{\"query\": {\"bool\": {\"must\": [{\"multi_match\": {\"query\": \"mug\", \"fields\": [\"title^3\", \"singleProductFields.brand^2\"]}}]}}, \"size\": 10}\n{\"index\": \"woocommerce_products_2025-08-09_09-19\"}\n{\"aggs\": {\"categories\": {\"nested\": {\"path\": \"productCategories.nodes\"}, \"aggs\": {\"category_names\": {\"terms\": {\"field\": \"productCategories.nodes.name.keyword\", \"size\": 20}}}}}}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/search-kit/_msearch",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "search-kit", "_msearch"]
+        }
+      }
+    },
+    {
+      "name": "Empty Search (All Products) - GET",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/search?page=1&size=12&sort=relevant",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "search"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "size",
+              "value": "12"
+            },
+            {
+              "key": "sort",
+              "value": "relevant",
+              "description": "Options: relevant, price_asc, price_desc, newest, name_asc"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Brand Only Filter - GET",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/search?brand=Nike&sort=price_desc&size=24",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "search"],
+          "query": [
+            {
+              "key": "brand",
+              "value": "Nike",
+              "description": "Filter by brand name"
+            },
+            {
+              "key": "sort",
+              "value": "price_desc"
+            },
+            {
+              "key": "size",
+              "value": "24"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Price Range Only - POST",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"filters\": {\n    \"price_min\": 10.0,\n    \"price_max\": 30.0\n  },\n  \"sort\": \"price_asc\",\n  \"page\": 1,\n  \"size\": 50\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/search",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "search"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}
