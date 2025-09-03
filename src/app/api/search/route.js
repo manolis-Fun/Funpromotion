@@ -28,7 +28,7 @@ export async function GET(request) {
     const size = parseInt(searchParams.get('size')) || 12;
 
     const searchBody = {
-      index: 'woocommerce_products_2025-08-09_09-19',
+      index: 'woocommerce_products_2025-08-28_23-38',
       body: {
         query: buildElasticsearchQuery({
           query,
@@ -128,7 +128,7 @@ export async function POST(request) {
     } = body;
 
     const searchBody = {
-      index: 'woocommerce_products_2025-08-09_09-19',
+      index: 'woocommerce_products_2025-08-28_23-38',
       body: {
         query: buildAdvancedQuery(query, filters),
         sort: buildSortQuery(sort),
