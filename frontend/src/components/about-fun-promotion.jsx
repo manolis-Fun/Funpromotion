@@ -20,6 +20,7 @@ const AboutFunPromotion = () => {
         </svg>
       </div>
 
+      
       {/* Bottom wave */}
       <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[calc(100%+1.3px)] h-[130px] overflow-hidden leading-[0] rotate-180">
         <svg viewBox="0 0 1920 80" preserveAspectRatio="none" className="block w-full h-full fill-[#f8f8f8] [transform:scaleX(-1)]">
