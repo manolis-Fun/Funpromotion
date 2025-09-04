@@ -4,8 +4,12 @@ import React from 'react';
 import { InstantSearch, SearchBox, Hits, RefinementList, Pagination, Configure, Stats, SortBy, RangeInput } from 'react-instantsearch';
 import Client from '@searchkit/instantsearch-client';
 
+const getBackendUrl = () => {
+  return process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+};
+
 const searchClient = Client({
-  url: '/api/search-kit/_msearch',
+  url: `${getBackendUrl()}/api/search-kit/_msearch`,
   headers: {
     'Content-Type': 'application/json'
   }
@@ -161,7 +165,7 @@ export default function SearchTestPage() {
       <div className="mt-12 p-6 bg-gray-100 rounded-lg">
         <h2 className="text-xl font-semibold mb-4">Test Information</h2>
         <div className="space-y-2 text-sm">
-          <p><strong>Endpoint:</strong> /api/search-kit/_msearch</p>
+          <p><strong>Endpoint:</strong> {getBackendUrl()}/api/search-kit/_msearch</p>
           <p><strong>Index:</strong> products</p>
           <p><strong>Client:</strong> @searchkit/instantsearch-client</p>
           <p><strong>UI Library:</strong> react-instantsearch</p>

@@ -2,6 +2,8 @@
 
 # dependencies
 /node_modules
+frontend/node_modules
+backend/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -12,13 +14,20 @@
 
 # testing
 /coverage
+frontend/coverage
+backend/coverage
 
 # next.js
 /.next/
+frontend/.next/
 /out/
 
 # production
 /build
+frontend/build
+backend/build
+frontend/dist
+backend/dist
 
 # misc
 .DS_Store
@@ -32,6 +41,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+frontend/.env*
+backend/.env*
 
 # vercel
 .vercel
@@ -39,3 +50,35 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# logs
+logs
+*.log
+
+# runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# optional npm cache directory
+.npm
+
+# optional eslint cache
+.eslintcache
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Temporary folders
+tmp/
+temp/

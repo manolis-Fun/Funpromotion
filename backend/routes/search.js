@@ -1,20 +1,16 @@
-// Temporarily disabled Elasticsearch to fix build issues
-// The search functionality is temporarily disabled while we fix dependency conflicts
+const express = require('express');
+const router = express.Router();
 
-export const dynamic = 'force-dynamic';
-export const dynamicParams = true;
-
-export async function GET(request) {
+router.get('/', async (req, res) => {
   try {
-    const { searchParams } = new URL(request.url);
-    const query = searchParams.get('q') || '';
-    const page = parseInt(searchParams.get('page')) || 1;
-    const size = parseInt(searchParams.get('size')) || 12;
+    const { q: query = '', page = 1, size = 12 } = req.query;
+    const pageNum = parseInt(page);
+    const sizeNum = parseInt(size);
     
     console.log('Search API called with query:', query);
     
     // Return empty results with proper structure
-    return new Response(JSON.stringify({
+    res.json({
       hits: [],
       total: 0,
       aggregations: {
@@ -24,40 +20,31 @@ export async function GET(request) {
         custom_tags: [],
         price_stats: {}
       },
-      page,
-      size,
+      page: pageNum,
+      size: sizeNum,
       totalPages: 0,
       message: 'Search temporarily disabled - Elasticsearch dependency needs to be updated'
-    }), {
-      headers: { 
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache'
-      },
-      status: 200
     });
 
   } catch (error) {
     console.error('Search API Error:', error);
-    return new Response(JSON.stringify({
+    res.status(500).json({
       error: 'Search failed',
       message: error.message,
       hits: [],
       total: 0,
       aggregations: {}
-    }), {
-      headers: { 'Content-Type': 'application/json' },
-      status: 500
     });
   }
-}
+});
 
-export async function POST(request) {
+router.post('/', async (req, res) => {
   try {
-    const body = await request.json();
+    const body = req.body;
     console.log('POST Search API called with body:', body);
     
     // Return empty results with proper structure
-    return new Response(JSON.stringify({
+    res.json({
       hits: [],
       total: 0,
       aggregations: {
@@ -72,22 +59,15 @@ export async function POST(request) {
       size: 12,
       totalPages: 0,
       message: 'Advanced search temporarily disabled'
-    }), {
-      headers: { 
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache'
-      },
-      status: 200
     });
 
   } catch (error) {
     console.error('POST Search API Error:', error);
-    return new Response(JSON.stringify({
+    res.status(500).json({
       error: 'Advanced search failed',
       message: error.message
-    }), {
-      headers: { 'Content-Type': 'application/json' },
-      status: 500
     });
   }
-}
+});
+
+module.exports = router;
