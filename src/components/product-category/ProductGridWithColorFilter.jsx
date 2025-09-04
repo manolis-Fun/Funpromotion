@@ -61,6 +61,8 @@ export default function ProductGridWithColorFilter({
 }) {
     const searchParams = useSearchParams();
     const filterColor = searchParams.get('filter_color');
+    const priceMin = searchParams.get('price_min');
+    const priceMax = searchParams.get('price_max');
     const [isPending, startTransition] = useTransition();
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const dispatch = useDispatch();
@@ -69,16 +71,42 @@ export default function ProductGridWithColorFilter({
     const [allProducts, setAllProducts] = useState(initialProducts);
     const [pageInfo, setPageInfo] = useState(initialPageInfo);
 
-    // Optimize filtering with useCallback to prevent unnecessary re-renders
+    // Optimize filtering with price and color filters
     const filteredProducts = useMemo(() => {
-        if (!filterColor) return allProducts;
+        let filtered = allProducts;
 
-        return allProducts.filter(product =>
-            product.allPaColor?.nodes?.some(
-                colorNode => colorNode.name.toLowerCase() === filterColor.toLowerCase()
-            )
-        );
-    }, [allProducts, filterColor]);
+        // Apply color filter
+        if (filterColor) {
+            filtered = filtered.filter(product =>
+                product.allPaColor?.nodes?.some(
+                    colorNode => colorNode.name.toLowerCase() === filterColor.toLowerCase()
+                )
+            );
+        }
+
+        // Apply price filter
+        if (priceMin && priceMax) {
+            const minPrice = parseFloat(priceMin);
+            const maxPrice = parseFloat(priceMax);
+            
+            filtered = filtered.filter(product => {
+                const price = product?.singleProductFields?.priceMainSale || 
+                             product?.singleProductFields?.priceMain || 
+                             product?.price;
+                
+                let numPrice;
+                if (typeof price === 'string') {
+                    numPrice = parseFloat(price.replace(/[^0-9.-]+/g, ''));
+                } else {
+                    numPrice = price;
+                }
+                
+                return !isNaN(numPrice) && numPrice >= minPrice && numPrice <= maxPrice;
+            });
+        }
+
+        return filtered;
+    }, [allProducts, filterColor, priceMin, priceMax]);
 
     // Load more products function
     const loadMoreProducts = useCallback(async () => {
@@ -134,12 +162,22 @@ export default function ProductGridWithColorFilter({
         );
     }
 
-    if (filterColor && filteredProducts.length === 0) {
+    if ((filterColor || (priceMin && priceMax)) && filteredProducts.length === 0) {
         return (
             <div className="flex flex-col items-center py-12">
-                <span className="text-gray-500 text-lg font-semibold capitalize">
-                    {filterColor} Color is not available in {categoryName ? <span className='font-bold text-black'> {categoryName}</span> : ''}.
+                <span className="text-gray-500 text-lg font-semibold">
+                    No products found with the selected filters in {categoryName ? <span className='font-bold text-black'> {categoryName}</span> : ''}.
                 </span>
+                {filterColor && (
+                    <span className="text-gray-400 text-sm mt-2 capitalize">
+                        Color: {filterColor}
+                    </span>
+                )}
+                {priceMin && priceMax && (
+                    <span className="text-gray-400 text-sm mt-1">
+                        Price: €{priceMin} - €{priceMax}
+                    </span>
+                )}
             </div>
         );
     }

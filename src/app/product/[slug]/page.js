@@ -1,10 +1,11 @@
-import { graphqlClient, getProductBySlugQuery, getMockData, fetchAllProducts } from '@/lib/graphql';
+import { graphqlClient, getProductBySlugQuery, fetchAllProducts } from '@/lib/graphql';
 import { notFound } from 'next/navigation';
 import ProductDetails from '@/components/product-detail';
 import SimilarProducts from '@/components/simillar-products';
 import NewsletterBanner from '@/components/NewsletterBanner';
 import ProductBanner from '@/components/product-banner';
 import ProductNotFound from '@/components/product-search';
+import { assertGraphQLShape, logPricingDebugSnapshot } from '@/utils/assertGraphQLShape';
 export const dynamic = 'force-static';
 export const revalidate = 3600;
 
@@ -16,10 +17,13 @@ const GET_PRODUCTS_BY_CATEGORY = `
         slug
         name
         title
+        v1W1
         singleProductFields {
           priceMain
           priceMainSale
           v1W1
+          brand
+          manipulation
         }
         image {
           sourceUrl
@@ -60,65 +64,41 @@ export async function generateStaticParams() {
 
 async function getProduct(slug) {
   try {
-    const data = await graphqlClient.request(getProductBySlugQuery, { slug })
-      .catch(() => getMockData(getProductBySlugQuery, { slug }));
+    let data;
+    try {
+      data = await graphqlClient.request(getProductBySlugQuery, { slug });
+    } catch (graphqlError) {
+      // Use mock data if GraphQL fails
+      const { getMockData } = await import('@/lib/graphql');
+      data = getMockData(getProductBySlugQuery, { slug });
+    }
 
     if (!data?.product) {
       return null;
     }
-
-    // Extract variations and attributes if present
-    let variations = [];
-    if (data.product.variations && data.product.variations.nodes) {
-      variations = data.product.variations.nodes.map(variation => ({
-        id: variation.databaseId || variation.id,
-        name: variation.name,
-        attributes: variation.attributes?.nodes || []
-      }));
-
-      // Debug logging
-      console.log('🔍 Product Variations from GraphQL:', {
-        productSlug: slug,
-        rawVariations: data.product.variations.nodes,
-        processedVariations: variations
-      });
-    }
-
-    // Get price from singleProductFields if available, otherwise fallback to basic price
+    
+    // Get price from singleProductFields if available, otherwise show unavailable
     const priceMain = data.product.singleProductFields?.priceMain;
     const priceMainSale = data.product.singleProductFields?.priceMainSale;
-    const finalPrice = priceMainSale || priceMain || data.product?.price || '0';
+    const finalPrice = priceMainSale || priceMain || data.product?.price;
 
     return {
       ...data.product,
       id: data.product.databaseId || data.product.id,
       title: data.product.title,
-      price: finalPrice,
-      priceMain: priceMain,
-      priceMainSale: priceMainSale,
-      stockQuantity: data.product?.stockQuantity || 0,
+      price: finalPrice || 'Information not available',
+      priceMain: priceMain || 'Information not available',
+      priceMainSale: priceMainSale || 'Information not available',
+      stockQuantity: data.product?.stockQuantity ?? 0,
       images: data.product?.image ? [data.product.image.sourceUrl] : [],
       galleryImages: data.product?.galleryImages?.nodes?.map(img => img.sourceUrl) || [],
-      description: data.product?.description || '',
-      shortDescription: data.product?.shortDescription || '',
-      supplierCode: 'P308.5801',
-      customerPrice: ((parseFloat(finalPrice || '0') * 1.3).toFixed(2) + ' €') || 'N/A',
-      printingOptions: [
-        { type: '1 Color', available: true },
-        { type: '2 Colors', available: true },
-        { type: '3 Colors', available: true },
-        { type: '4 Colors', available: true },
-        { type: 'Laser', available: true },
-        { type: 'Digital', available: true },
-      ],
-      variations: data.product?.variations?.nodes?.map(variation => ({
-        id: variation.databaseId || variation.id,
-        name: variation.name,
-        attributes: variation.attributes?.nodes || []
-      }))
+      description: data.product?.description || 'Information not available',
+      shortDescription: data.product?.shortDescription || 'Information not available',
+      supplierCode: data.product?.supplierCode || 'Information not available',
+      customerPrice: finalPrice ? ((parseFloat(finalPrice) * 1.3).toFixed(2) + ' €') : 'Information not available',
+      variations: data.product?.variations?.nodes || []
     };
   } catch (error) {
-    console.error('Error fetching product:', error);
     return null;
   }
 }
@@ -136,8 +116,19 @@ export default async function ProductPage({ params }) {
   // Fetch products by category
   let similarProducts = [];
   if (productCategories.length > 0) {
-    const data = await graphqlClient.request(GET_PRODUCTS_BY_CATEGORY, { category: productCategories });
-    similarProducts = (data.products.nodes || []).filter(p => p.slug !== product.slug);
+    try {
+      const data = await graphqlClient.request(GET_PRODUCTS_BY_CATEGORY, { category: productCategories });
+      similarProducts = (data.products.nodes || []).filter(p => p.slug !== product.slug);
+    } catch (error) {
+      // Try to use mock data as fallback
+      try {
+        const { getMockData } = await import('@/lib/graphql');
+        const mockData = getMockData(GET_PRODUCTS_BY_CATEGORY, { category: productCategories });
+        similarProducts = (mockData?.products?.nodes || []).filter(p => p.slug !== product.slug);
+      } catch (mockError) {
+        similarProducts = [];
+      }
+    }
   }
   return (
     <main>

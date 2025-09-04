@@ -3,85 +3,45 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { FiSearch } from "react-icons/fi";
-import { fetchAllProducts } from "@/lib/graphql";
 
-export default function SearchModal({ query, onClose }) {
+const SearchModal = React.memo(function SearchModal({ query, onClose }) {
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [allProducts, setAllProducts] = useState([]);
-
-    // Fetch all products once when component mounts
-    useEffect(() => {
-        const loadProducts = async () => {
-            try {
-                const products = await fetchAllProducts(100);
-                setAllProducts(products);
-            } catch (err) {
-                console.error("Failed to load products:", err);
-            }
-        };
-        loadProducts();
-    }, []);
 
     useEffect(() => {
-        if (!query?.trim() || !allProducts.length) {
+        if (!query?.trim()) {
             setResults([]);
             setError(null);
             return;
         }
 
-        setLoading(true);
-        try {
-            const searchTerm = query.trim().toLowerCase();
+        const searchProducts = async () => {
+            setLoading(true);
+            try {
+                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&size=10`);
+                
+                if (!response.ok) {
+                    throw new Error('Search failed');
+                }
+                
+                const data = await response.json();
+                setResults(data.hits || []);
+                setError(null);
+            } catch (err) {
+                console.error("Search error:", err);
+                setError("Failed to search products. Please try again.");
+                setResults([]);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-            // Filter and sort products based on search query
-            const filteredProducts = allProducts
-                .filter((product) => {
-                    const title = (product.title || "").toLowerCase();
-                    return title.includes(searchTerm);
-                })
-                .map((product) => {
-                    // Calculate relevance score
-                    const title = (product.title || "").toLowerCase();
-                    let score = 0;
-
-                    // Exact match gets highest score
-                    if (title === searchTerm) {
-                        score = 100;
-                    }
-                    // Title starts with query gets high score
-                    else if (title.startsWith(searchTerm)) {
-                        score = 75;
-                    }
-                    // Word boundary match gets medium score
-                    else if (title.includes(` ${searchTerm}`)) {
-                        score = 50;
-                    }
-                    // Contains query gets lowest score
-                    else {
-                        score = 25;
-                    }
-
-                    return {
-                        ...product,
-                        score,
-                    };
-                })
-                .sort((a, b) => b.score - a.score)
-                .slice(0, 10);
-
-            setResults(filteredProducts);
-            setError(null);
-        } catch (err) {
-            setError("Failed to search products. Please try again.");
-            setResults([]);
-        } finally {
-            setLoading(false);
-        }
-    }, [query, allProducts]);
+        // Debounce the search
+        const timeoutId = setTimeout(searchProducts, 300);
+        return () => clearTimeout(timeoutId);
+    }, [query]);
 
     if (!query?.trim()) return null;
 
@@ -120,21 +80,17 @@ export default function SearchModal({ query, onClose }) {
                         </p>
                     </div>
                     <ul className="max-h-[calc(100vh-320px)] mb-20 overflow-y-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-4">
-                        {results.slice(0, 5).map((product, index) => {
-                            const short = product?.shortDescription?.replace(/\n$/, "");
-                            // Get the proper price from singleProductFields if available
-                            const displayPrice = product?.singleProductFields?.priceMainSale ||
-                                product?.singleProductFields?.priceMain ||
-                                product?.price ||
-                                null;
-
+                        {results.map((product, index) => {
+                            const displayPrice = product?.discount_price || product?.price || null;
+                            const hasDiscount = product?.has_discount;
+                            
                             return (
-                                <Link key={index} href={`/product/${product?.slug}`} onClick={onClose}>
-                                    <div className=" group cursor-pointer bg-[#F9F9F9] rounded-xl border border-gray-200 p-4 flex flex-col text-center hover:shadow transition">
+                                <Link key={product?.id || index} href={`/product/${product?.slug}`} onClick={onClose}>
+                                    <div className="group cursor-pointer bg-[#F9F9F9] rounded-xl border border-gray-200 p-4 flex flex-col text-center hover:shadow transition">
                                         <div className="relative w-full aspect-square mb-4 rounded-lg overflow-hidden bg-white">
-                                            {product?.image?.sourceUrl ? (
+                                            {product?.images?.[0]?.sourceUrl || product?.images?.[0] ? (
                                                 <img
-                                                    src={product?.image?.sourceUrl}
+                                                    src={product?.images[0]?.sourceUrl || product?.images[0]}
                                                     alt={product?.name}
                                                     className="w-full h-full object-cover"
                                                 />
@@ -144,12 +100,28 @@ export default function SearchModal({ query, onClose }) {
                                         </div>
                                         <div className="flex-1 text-left ml-4">
                                             <h3 className="text-gray-900 font-semibold leading-[26px] text-lg mb-2 manrope-font">
-                                                {product?.title?.length > 20 ? product?.title.slice(0, 20) + "..." : product?.title || product?.name?.slice(0, 20) + "..."}
+                                                {highlightMatch(
+                                                    product?.name?.length > 30 
+                                                        ? product?.name.slice(0, 30) + "..." 
+                                                        : product?.name,
+                                                    query
+                                                )}
                                             </h3>
-                                            {displayPrice && <span className="text-[#FF7700] text-sm py-2 text-start font-semibold h-9">{displayPrice}</span>}
+                                            {displayPrice && (
+                                                <div className="flex items-center gap-2">
+                                                    {hasDiscount && product?.price && (
+                                                        <span className="text-gray-400 line-through text-sm">
+                                                            €{product.price.toFixed(2)}
+                                                        </span>
+                                                    )}
+                                                    <span className="text-[#FF7700] text-sm font-semibold">
+                                                        €{displayPrice.toFixed(2)}
+                                                    </span>
+                                                </div>
+                                            )}
                                             <div className="flex items-center mb-2 font-bold text-gray-500 leading-[18px] text-[13px] manrope-font">
-                                                <div className="w-3 h-3 bg-green-500 rounded-full mr-2 manrope-font"></div>
-                                                In stock: ({product?.stockQuantity ?? 0})
+                                                <div className={`w-3 h-3 ${product?.stock_total > 0 ? 'bg-green-500' : 'bg-red-500'} rounded-full mr-2`}></div>
+                                                {product?.stock_total > 0 ? `In stock: (${product.stock_total})` : 'Out of stock'}
                                             </div>
                                         </div>
                                     </div>
@@ -157,7 +129,6 @@ export default function SearchModal({ query, onClose }) {
                             );
                         })}
                     </ul>
-
                 </div>
             ) : (
                 <div className="p-8 text-center">
@@ -168,4 +139,6 @@ export default function SearchModal({ query, onClose }) {
             )}
         </div>
     );
-}
+});
+
+export default SearchModal;

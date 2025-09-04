@@ -1,214 +1,284 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import ImageSection from "./image-section";
 import Breadcrumbs from "./breadcrumbs";
 import PrintingOptionIcons from "./printing-option-icons";
-import ProductPricing from "./product-pricing";
-import { translateSizeLabel, fetchPricingData } from "@/utils/helpers";
+import { translateSizeLabel, uniqueTechniques, uniquePositions, uniqueSizes, uniqueExtras, formatTechniqueLabel, getTechniqueColors, formatAttributeValue, findCheapestCombination, findCheapestForConstraints } from "@/utils/helpers";
 import QuantityModal from "./quantity-modal";
+import QuantityPricingModal from "./quantity-pricing-modal";
+import QuantityDropdown from "./quantity-dropdown";
 import InterestModal from "./interest-modal";
 import MessageIcon from "@/icons/message-icon";
 import { addToCart } from "@/utils/cart";
 
-const PRINTING_OPTIONS = [
-  { label: "1 Color", value: "1-color" },
-  { label: "2 Colors", value: "2-colors" },
-  { label: "3 Colors", value: "3-colors" },
-  { label: "4 Colors", value: "4-colors" },
-  { label: "Embroidery", value: "embroidery" },
-  { label: "Full Color", value: "full-color" },
-  { label: "No Print", value: "no-print" },
-];
 
-const PRINTING_TECHNIQUE_COLORS = {
-  "1-color": ["#7627b9"],
-  "2-colors": ["#7627b9", "#1cb4cf"],
-  "3-colors": ["#7627b9", "#1cb4cf", "#fbbf24"],
-  "4-colors": ["#7627b9", "#1cb4cf", "#fbbf24", "#ef4444"],
-  embroidery: ["#f59e42"],
-  "full-color": ["gradient"],
-  "no-print": ["#e5e7eb"],
-};
-
-// Base quantity tiers - prices will be loaded dynamically
+// Base quantity tiers - discounts will be calculated dynamically
 const QUANTITY_TIERS = [
   { quantity: 50, staticDiscount: 0.0 },
-  { quantity: 100, staticDiscount: 10.2 },
-  { quantity: 250, staticDiscount: 16.3 },
-  { quantity: 500, staticDiscount: 19.8 },
-  { quantity: 1000, staticDiscount: 21.9 },
-  { quantity: 2500, staticDiscount: 25.7 },
+  { quantity: 100, staticDiscount: 0.0 },
+  { quantity: 250, staticDiscount: 0.0 },
+  { quantity: 500, staticDiscount: 0.0 },
+  { quantity: 1000, staticDiscount: 0.0 },
+  { quantity: 2500, staticDiscount: 0.0 },
 ];
 
-export default function ProductDetails({ product }) {
+export default function 
+ProductDetails({ product }) {
+  // Product detail component
+
   const mainImage = product.images?.[0] || "/placeholder.jpg";
   const galleryImages = product.galleryImages?.length ? product.galleryImages : product.images || [];
 
   const [selectedImage, setSelectedImage] = useState(mainImage);
-  const [quantity, setQuantity] = useState(250);
+  const [quantity, setQuantity] = useState(100);
   const [customQuantity, setCustomQuantity] = useState("");
-  const [userRole] = useState("customer");
-  const [quantityPricing, setQuantityPricing] = useState({});
-  const [isLoadingPricing, setIsLoadingPricing] = useState(false);
-  const [basePriceReference, setBasePriceReference] = useState(25.37); // Base price for discount calculation
   const [isQuantityDropdownOpen, setIsQuantityDropdownOpen] = useState(false); // New state for dropdown
   const [isInterestModalOpen, setIsInterestModalOpen] = useState(false); // New state for interest modal
+  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false); // State for enhanced pricing modal
+  const [productPrices, setProductPrices] = useState(null); // State for product prices
 
   const variations = useMemo(
     () =>
       (product.variations || []).map((v) => ({
         ...v,
-        attributes: v.attributes.map(({ label, value }) => ({ label, value })),
+        attributes: (v.attributes?.nodes || v.attributes || []).map(({ label, value }) => ({ label, value })),
       })),
     [product.variations]
   );
 
-  const techniques = useMemo(() => [...new Set(variations.map((v) => v.attributes.find((a) => a.label === "technique")?.value).filter(Boolean))], [variations]);
+  // Find cheapest combination on page load
+  const cheapestCombination = useMemo(() => {
+    return findCheapestCombination(
+      variations, 
+      quantity, 
+      product.priceMain, 
+      product.singleProductFields?.brand, 
+      product.singleProductFields?.manipulation
+    );
+  }, [variations, quantity, product.priceMain, product.singleProductFields?.brand, product.singleProductFields?.manipulation]);
 
-  const [technique, setTechnique] = useState(() => (techniques.includes("no-print") ? "no-print" : techniques[0] || ""));
+  // Set initial state based on cheapest combination
+  const [technique, setTechnique] = useState(() => cheapestCombination.technique);
+  const [selectedPosition, setSelectedPosition] = useState(() => cheapestCombination.position);
+  const [selectedSize, setSelectedSize] = useState(() => cheapestCombination.size);  
+  const [selectedExtra, setSelectedExtra] = useState(() => cheapestCombination.extra);
+
+  // Get available options with conditional filtering
+  const techniques = useMemo(() => uniqueTechniques(variations), [variations]);
+  
+  const positions = useMemo(() => {
+    const filteredByTechnique = variations.filter((v) => {
+      const attrs = v.attributes?.nodes ?? v.attributes ?? [];
+      return attrs.find((a) => a.label === "technique")?.value === technique;
+    });
+    return uniquePositions(filteredByTechnique);
+  }, [variations, technique]);
+
+  const sizes = useMemo(() => {
+    const filteredVariations = variations.filter((v) => {
+      const attrs = Object.fromEntries((v.attributes?.nodes || v.attributes || []).map((a) => [a.label, a.value]));
+      return attrs.technique === technique && 
+             (positions.length <= 1 || attrs.position === selectedPosition);
+    });
+    return uniqueSizes(filteredVariations);
+  }, [variations, technique, positions, selectedPosition]);
+
+  const extras = useMemo(() => {
+    const filteredVariations = variations.filter((v) => {
+      const attrs = Object.fromEntries((v.attributes?.nodes || v.attributes || []).map((a) => [a.label, a.value]));
+      return attrs.technique === technique && 
+             (positions.length <= 1 || attrs.position === selectedPosition) &&
+             (sizes.length <= 1 || attrs.size === selectedSize);
+    });
+    return uniqueExtras(filteredVariations);
+  }, [variations, technique, positions, selectedPosition, sizes, selectedSize]);
+
+  // Update state when cheapest combination changes (quantity changes)
+  useEffect(() => {
+    setTechnique(cheapestCombination.technique);
+    setSelectedPosition(cheapestCombination.position);
+    setSelectedSize(cheapestCombination.size);
+    setSelectedExtra(cheapestCombination.extra);
+  }, [cheapestCombination]);
+
+  // Hierarchical selection handlers
+  const handleTechniqueChange = (newTechnique) => {
+    // When technique changes, find cheapest combination for remaining attributes
+    const cheapest = findCheapestForConstraints(
+      variations,
+      { technique: newTechnique },
+      quantity,
+      product.priceMain,
+      product.singleProductFields?.brand,
+      product.singleProductFields?.manipulation
+    );
+    
+    setTechnique(newTechnique);
+    setSelectedPosition(cheapest.position);
+    setSelectedSize(cheapest.size);
+    setSelectedExtra(cheapest.extra);
+  };
+
+  const handlePositionChange = (newPosition) => {
+    // When position changes, find cheapest combination for size and extra
+    const cheapest = findCheapestForConstraints(
+      variations,
+      { technique, position: newPosition },
+      quantity,
+      product.priceMain,
+      product.singleProductFields?.brand,
+      product.singleProductFields?.manipulation
+    );
+    
+    setSelectedPosition(newPosition);
+    setSelectedSize(cheapest.size);
+    setSelectedExtra(cheapest.extra);
+  };
+
+  const handleSizeChange = (newSize) => {
+    // When size changes, find cheapest extra
+    const cheapest = findCheapestForConstraints(
+      variations,
+      { technique, position: selectedPosition, size: newSize },
+      quantity,
+      product.priceMain,
+      product.singleProductFields?.brand,
+      product.singleProductFields?.manipulation
+    );
+    
+    setSelectedSize(newSize);
+    setSelectedExtra(cheapest.extra);
+  };
+
+  const handleExtraChange = (newExtra) => {
+    // Extra is the last attribute, no hierarchical selection needed
+    setSelectedExtra(newExtra);
+  };
+
+  // Reset dependent selections when parent changes (fallback for edge cases)
+  useEffect(() => {
+    if (!positions.includes(selectedPosition)) {
+      const newPosition = positions[0] || "";
+      setSelectedPosition(newPosition);
+    }
+  }, [positions, selectedPosition]);
 
   useEffect(() => {
-    if (!techniques.includes(technique)) setTechnique(techniques[0] || "");
-  }, [techniques, technique]);
-
-  const filteredVariations = useMemo(() => variations.filter((v) => v.attributes.find((a) => a.label === "technique")?.value === technique), [variations, technique]);
-
-  const sizes = useMemo(() => [...new Set(filteredVariations.map((v) => v.attributes.find((a) => a.label === "size")?.value).filter(Boolean))], [filteredVariations]);
-
-  const positions = useMemo(() => [...new Set(filteredVariations.map((v) => v.attributes.find((a) => a.label === "position")?.value).filter(Boolean))], [filteredVariations]);
-
-  const [selectedSize, setSelectedSize] = useState(() => sizes[0] || "");
-  const [selectedPosition, setSelectedPosition] = useState(() => positions[0] || "");
+    if (!sizes.includes(selectedSize)) {
+      const newSize = sizes[0] || "";
+      setSelectedSize(newSize);
+    }
+  }, [sizes, selectedSize]);
 
   useEffect(() => {
-    if (!sizes.includes(selectedSize)) setSelectedSize(sizes[0] || "");
-    if (!positions.includes(selectedPosition)) setSelectedPosition(positions[0] || "");
-  }, [sizes, positions, selectedSize, selectedPosition]);
+    if (!extras.includes(selectedExtra)) {
+      const newExtra = extras[0] || "";
+      setSelectedExtra(newExtra);
+    }
+  }, [extras, selectedExtra]);
 
   const selectedVariation = useMemo(() => {
-    const variation = filteredVariations.find((v) => {
-      const attr = Object.fromEntries(v.attributes.map((a) => [a.label, a.value]));
-      return attr.technique === technique && (sizes.length <= 1 || attr.size === selectedSize) && (positions.length <= 1 || attr.position === selectedPosition);
+    const variation = variations.find((v) => {
+      const attr = Object.fromEntries((v.attributes?.nodes || v.attributes || []).map((a) => [a.label, a.value]));
+      return attr.technique === technique && 
+             (positions.length <= 1 || attr.position === selectedPosition) &&
+             (sizes.length <= 1 || attr.size === selectedSize) && 
+             (extras.length <= 1 || attr.extra === selectedExtra);
     });
 
-    // Debug logging
-    console.log('🔍 Variation Selection Debug:', {
-      technique,
-      selectedSize,
-      selectedPosition,
-      filteredVariations,
-      foundVariation: variation,
-      variationId: variation?.id,
-      allVariations: variations,
-      // NEW: Detailed attribute debugging
-      variationAttributes: variation?.attributes,
-      firstVariationAttrs: variations[0]?.attributes,
-      availableSizes: sizes,
-      availablePositions: positions
-    });
 
     return variation;
-  }, [filteredVariations, technique, selectedSize, selectedPosition, sizes, positions, variations]);
+  }, [variations, technique, selectedPosition, selectedSize, selectedExtra, sizes, positions, extras]);
 
-  const getAttr = (label) => selectedVariation?.attributes.find((a) => a.label === label)?.value || "-";
 
-  const mockVariationData = useMemo(
-    () =>
-      selectedVariation && {
-        id: selectedVariation.id,
-        printing_technique_field: technique,
-        max_printing_size: getAttr("size"),
-        price_print_1_3: 0.5,
-        price_print_3_5: 0.45,
-        price_print_5_10: 0.4,
-        price_print_10_25: 0.35,
-        price_print_25_50: 0.3,
-        price_print_50_100: 0.25,
-        price_print_100_250: 0.2,
-        price_print_250_500: 0.18,
-        price_print_500_1000: 0.15,
-        price_print_1000_2500: 0.12,
-        price_print_2500_5000: 0.1,
-        price_print_5000_10000: 0.08,
-        price_print_10000_infinity: 0.06,
-        price_print_setup: 25,
-      },
-    [selectedVariation, technique]
-  );
+  // Call pricing APIs - print-price for printing techniques, product-price for final pricing
+  const callPricingAPIs = async (quantities = [quantity || 100]) => {
+    try {
+      // Use exactly what's selected - no fallbacks since UI conditionally renders available options
+      const currentPosition = selectedPosition;
+      const currentSize = selectedSize;  
+      const currentExtra = selectedExtra;
+      
+      
+      let printPriceData = null;
+      
+      // Step 1: Call print-price API only if technique is NOT "no-print"
+      if (technique !== 'no-print') {
+        const printRequestBody = {
+          quantity: quantities,
+          technique: technique || '',
+          position: currentPosition,
+          size: currentSize,
+          extra: currentExtra,
+          variations: product.variations || [],
+          manipulation: product.singleProductFields?.manipulation,
+          basePrice: product.priceMain,
+          brand: product.singleProductFields?.brand
+        };
 
-  // Load pricing for all quantity tiers
-  useEffect(() => {
-    const loadPricingForAllTiers = async () => {
-      if (!product.singleProductFields?.brand || !product.priceMain) return;
-
-      setIsLoadingPricing(true);
-      const pricing = {};
-
-      try {
-        // Fetch pricing for each quantity tier
-        await Promise.all(
-          QUANTITY_TIERS.map(async (tier) => {
-            try {
-              const res = await fetchPricingData({
-                brand: product.singleProductFields.brand,
-                priceMain: product.priceMain,
-                quantity: tier.quantity,
-                selectedTechnique: technique,
-                v1w1: product.singleProductFields.v1W1,
-              });
-
-              const basePrice = res.finalPrice?.breakdown?.product_price || product.priceMain || 0;
-
-              // Calculate discount based on base price (first tier)
-              if (tier.quantity === 50) {
-                setBasePriceReference(basePrice);
-              }
-
-              pricing[tier.quantity] = {
-                price: basePrice,
-                staticDiscount: tier.staticDiscount, // Use static discount from tier
-                totalPrice: res.finalPrice?.total_price || basePrice * tier.quantity,
-              };
-            } catch (error) {
-              // Fallback pricing if API fails
-              const fallbackPrices = {
-                50: 25.37,
-                100: 22.77,
-                250: 21.23,
-                500: 20.35,
-                1000: 19.8,
-                2500: 18.85,
-              };
-
-              pricing[tier.quantity] = {
-                price: fallbackPrices[tier.quantity] || product.priceMain || 0,
-                staticDiscount: tier.staticDiscount, // Use static discount from tier
-                totalPrice: (fallbackPrices[tier.quantity] || product.priceMain || 0) * tier.quantity,
-              };
-            }
-          })
-        );
-
-        setQuantityPricing(pricing);
-      } catch (error) {
-        console.error("Error loading pricing:", error);
-      } finally {
-        setIsLoadingPricing(false);
+        const printResponse = await fetch('/api/print-price', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(printRequestBody),
+        });
+        
+        printPriceData = await printResponse.json();
       }
-    };
+      
+      // Step 2: Call product-price API for each quantity with its corresponding print price
+      const productPriceResults = [];
+      
+      for (const qty of quantities) {
+        // Find the print price for this specific quantity
+        const printDataForQty = printPriceData?.pricing?.find(p => p.quantity === qty);
+        const printPricePerUnit = printDataForQty?.finalTotalPerUnit || 0;
+        
+        const productRequestBody = {
+          totalPrintPricePerUnit: printPricePerUnit,
+          quantity: [qty], // Single quantity for this call
+          brand: product.singleProductFields?.brand,
+          basePrice: product.priceMain
+        };
 
-    loadPricingForAllTiers();
-  }, [product, technique]);
-
-  const handleCustomQuantitySubmit = () => {
-    const qty = parseInt(customQuantity);
-    if (qty && qty > 0) {
-      setQuantity(qty);
-      setCustomQuantity("");
+        const productResponse = await fetch('/api/product-price', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(productRequestBody),
+        });
+        
+        const productPriceData = await productResponse.json();
+        
+        // Add the result to our collection
+        if (productPriceData.pricing && productPriceData.pricing.length > 0) {
+          productPriceResults.push(productPriceData.pricing[0]);
+        }
+      }
+      
+      // Store pricing data for display
+      setProductPrices(productPriceResults);
+      
+    } catch (error) {
+      // Handle error silently or with user-friendly message
     }
   };
+
+  useEffect(() => {
+    // Only call API if we have the essential parameters and derived arrays are ready
+    if (quantity && technique && positions.length >= 0 && sizes.length >= 0 && extras.length >= 0) {
+      callPricingAPIs();
+    }
+  }, [quantity, technique, selectedPosition, selectedSize, selectedExtra, positions, sizes, extras, product.variations]);
+
+  // Handle dropdown open with all quantities
+  const handleDropdownOpen = (quantities) => {
+    callPricingAPIs(quantities);
+  };
+
 
   return (
     <section className="bg-[#f8f8f8] pt-44">
@@ -228,81 +298,162 @@ export default function ProductDetails({ product }) {
               <span className="text-orange-500 font-semibold">{product.stockQuantity}</span> In Stock
             </div>
             <div className="space-y-6">
-              {/* Technique */}
-              <div>
-                <h3 className="font-medium mb-3">PRINTING TECHNIQUE</h3>
-                <div className="flex border border-gray-200 rounded-lg justify-between overflow-hidden w-fit">
-                  {PRINTING_OPTIONS.filter((opt) => techniques.includes(opt.value)).map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setTechnique(opt.value)}
-                      className={`flex flex-col items-center px-[18px] py-3 text-black ${technique === opt.value ? "bg-[#F5F5F5]" : "bg-white"}`}
-                    >
-                      <PrintingOptionIcons colors={PRINTING_TECHNIQUE_COLORS[opt.value]} />
-                      <span className="text-xs">{opt.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {/* Size */}
-              {sizes.length > 1 && (
+              {/* Step 1: Colors (Technique) - Always shown first */}
+              {techniques.length > 0 && (
                 <div>
-                  <h3 className="font-medium mb-3">PRINT SIZE</h3>
-                  <div className="flex flex-wrap gap-2">
+                  <h3 className="font-medium mb-3">PRINTING TECHNIQUE</h3>
+                  <div className="flex border border-gray-200 rounded-lg justify-between overflow-hidden w-fit">
+                    {techniques.map((techniqueValue) => (
+                      <button
+                        key={techniqueValue}
+                        onClick={() => handleTechniqueChange(techniqueValue)}
+                        className={`flex flex-col items-center px-[18px] py-3 text-black ${technique === techniqueValue ? "bg-[#F5F5F5]" : "bg-white"}`}
+                      >
+                        <PrintingOptionIcons colors={getTechniqueColors(techniqueValue)} />
+                        <span className="text-xs">{formatTechniqueLabel(techniqueValue)}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Position - Only shown if technique is not no-print and has meaningful options */}
+              {technique !== 'no-print' && positions.length > 0 && !(positions.length === 1 && positions[0] === '') && (
+                <div>
+                  <h3 className="font-medium mb-3">PRINT POSITION</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    {positions.map((pos) => {
+                      // Get position-specific data
+                      const positionVariation = variations.find(v => 
+                        v.attributes.find(a => a.label === "position")?.value === pos &&
+                        v.attributes.find(a => a.label === "technique")?.value === technique
+                      );
+                      
+                      const positionSize = positionVariation?.attributes.find(a => a.label === "size")?.value;
+                      const positionImage = product.images?.[0] || "/placeholder.jpg";
+                      
+                      // Parse size information for display
+                      const sizeDisplay = positionSize ? translateSizeLabel(positionSize) : "Standard";
+                      
+                      return (
+                        <div key={pos} className="relative group">
+                          <button
+                            onClick={() => handlePositionChange(pos)}
+                            className={`p-3 rounded-lg border-2 transition-all hover:shadow-md ${
+                              selectedPosition === pos 
+                                ? "border-orange-500 bg-orange-50" 
+                                : "border-gray-200 bg-white hover:border-gray-300"
+                            }`}
+                          >
+                            <div className="flex flex-col items-center text-center">
+                              <div className="w-16 h-16 mb-2 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+                                <img
+                                  src={positionImage}
+                                  alt={`${pos} position`}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <div className="text-xs font-bold text-gray-800 uppercase mb-1">
+                                {formatAttributeValue(pos)}
+                              </div>
+                              <div className="text-xs text-gray-600">
+                                {sizeDisplay}
+                              </div>
+                            </div>
+                          </button>
+                          
+                          {/* Tooltip with larger image */}
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                            <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-3">
+                              <div className="w-32 h-32 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+                                <img
+                                  src={positionImage}
+                                  alt={`${formatAttributeValue(pos)} position preview`}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <div className="mt-2 text-center">
+                                <div className="text-sm font-medium text-gray-800">
+                                  {formatAttributeValue(pos)}
+                                </div>
+                                <div className="text-xs text-gray-600">
+                                  {sizeDisplay}
+                                </div>
+                              </div>
+                              {/* Arrow pointing down */}
+                              <div className="absolute top-full left-1/2 transform -translate-x-1/2">
+                                <div className="w-3 h-3 bg-white border-r border-b border-gray-200 transform rotate-45"></div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Size - Only shown if technique is not no-print and has meaningful options */}
+              {technique !== 'no-print' && sizes.length > 0 && !(sizes.length === 1 && sizes[0] === '') && (
+                <div>
+                  <h3 className="font-medium mb-3 text-lg">Size</h3>
+                  <div className="flex flex-wrap gap-3">
                     {sizes.map((size) => (
                       <button
                         key={size}
-                        onClick={() => setSelectedSize(size)}
-                        className={`px-2 py-[6px] rounded-3xl text-xs border ${selectedSize === size ? "bg-orange-500 text-white border-orange-500" : "bg-white text-gray-700 border-gray-300"
-                          }`}
+                        onClick={() => handleSizeChange(size)}
+                        className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-colors ${
+                          selectedSize === size 
+                            ? "bg-white border-orange-500 text-gray-800" 
+                            : "bg-white border-gray-300 text-gray-600 hover:border-gray-400"
+                        }`}
                       >
-                        {translateSizeLabel(size)}
+                        {formatAttributeValue(size, "size")}
                       </button>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Position */}
-              {positions.length > 1 && (
+              {/* Step 4: Extra - Only shown if technique is not no-print and has meaningful options */}
+              {technique !== 'no-print' && extras.length > 0 && !(extras.length === 1 && extras[0] === '') && (
                 <div>
-                  <h3 className="font-medium mb-3">PRINT POSITION</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {positions.map((pos) => (
+                  <h3 className="font-medium mb-3 text-lg">EXTRAS</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {extras.map((extra) => (
                       <button
-                        key={pos}
-                        onClick={() => setSelectedPosition(pos)}
-                        className={`px-2 py-[6px] rounded-3xl text-xs border ${selectedPosition === pos ? "bg-orange-500 text-white border-orange-500" : "bg-white text-gray-700 border-gray-300"
-                          }`}
+                        key={extra || "nothing"}
+                        onClick={() => handleExtraChange(extra)}
+                        className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-colors ${
+                          selectedExtra === extra 
+                            ? "bg-white border-orange-500 text-gray-800" 
+                            : "bg-white border-gray-300 text-gray-600 hover:border-gray-400"
+                        }`}
                       >
-                        {pos}
+{formatAttributeValue(extra).replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
                       </button>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Quantity Dropdown Button */}
-              <div className="relative">
-                <div className="flex items-center border border-orange-600 overflow-hidden rounded-lg w-fit">
-                  <button
-                    onClick={() => setIsQuantityDropdownOpen(!isQuantityDropdownOpen)}
-                    className="flex items-center justify-between w-48 px-4 py-2 bg-white hover:bg-gray-50 transition-colors"
-                  >
-                    <span className="font-medium text-gray-500">{quantity} Pieces</span>
-                    <ChevronDownIcon className={`w-5 h-5 transition-transform ${isQuantityDropdownOpen ? "rotate-180" : ""}`} />
-                  </button>
+              {/* Quantity and Pricing Section */}
+              <div className="space-y-4">
+                {/* Quantity Selector with Enhanced Pricing */}
+                <div className="flex flex-wrap gap-4 items-start">
+                  <QuantityDropdown
+                    quantity={quantity}
+                    setQuantity={setQuantity}
+                    onDropdownOpen={handleDropdownOpen}
+                    productPrices={productPrices}
+                  />
+
+                  
+
                   <button
                     onClick={async () => {
                       try {
-                        // Debug: Log current state
-                        console.log('Current selection state:', {
-                          selectedVariation,
-                          technique,
-                          selectedSize,
-                          selectedPosition,
-                          productId: product.id
-                        });
+                        // Add to cart with current selection
 
                         // Determine the correct product ID to use
                         let productIdToUse;
@@ -341,14 +492,6 @@ export default function ProductDetails({ product }) {
                           }
                         }
 
-                        console.log('Adding to cart with data:', {
-                          id: productIdToUse,
-                          quantity: quantity,
-                          attributes: variationAttributes,
-                          isNoprint: technique === 'no-print',
-                          productId: product.id,
-                          variationId: selectedVariation?.id
-                        });
 
                         const res = await addToCart(
                           productIdToUse,
@@ -356,7 +499,6 @@ export default function ProductDetails({ product }) {
                           variationAttributes
                         );
 
-                        console.log("Cart response:", res);
 
                         // Show success message
                         if (res.error) {
@@ -365,7 +507,6 @@ export default function ProductDetails({ product }) {
                           alert('Product added to cart successfully!');
                         }
                       } catch (err) {
-                        console.error("Failed to add to cart:", err);
                         alert('Failed to add product to cart: ' + err.message);
                       }
                     }}
@@ -373,8 +514,63 @@ export default function ProductDetails({ product }) {
                   >
                     Add to cart
                   </button>
+                  
                 </div>
-
+{/* Small Price Panel - Shows price for selected quantity */}
+                  {productPrices && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-4">
+                      {productPrices.map((productData, index) => 
+                        productData.quantity === quantity ? (
+                          <div key={index} className="flex justify-between items-center">
+                            <div className="flex flex-col">
+                              <span className="text-sm text-gray-600">{quantity} pieces</span>
+                              <span className="text-xs text-gray-500">
+                                €{productData.finalProductPricePerUnit?.toFixed(2) || '0.00'} per unit
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-gray-900">
+                                €{productData.finalProductPrice?.toFixed(2) || '0.00'}
+                              </div>
+                              {/* Show discount if available */}
+                              {(() => {
+                                const basePrice = productPrices.find(p => p.quantity === 50);
+                                if (!basePrice || !productData.finalProductPricePerUnit || !basePrice.finalProductPricePerUnit) {
+                                  return null;
+                                }
+                                
+                                const currentPriceValue = parseFloat(productData.finalProductPricePerUnit);
+                                const basePriceValue = parseFloat(basePrice.finalProductPricePerUnit);
+                                
+                                // Only show discount if current price is actually lower
+                                if (currentPriceValue >= basePriceValue) return null;
+                                
+                                const discount = ((basePriceValue - currentPriceValue) / basePriceValue) * 100;
+                                
+                                if (discount > 0.1) { // Only show if discount is meaningful
+                                  return (
+                                    <div className="text-sm text-green-600 font-medium">
+                                      Save {discount.toFixed(1)}%
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })()}
+                            </div>
+                          </div>
+                        ) : null
+                      )}
+                    </div>
+                  )}
+                {/* Enhanced Pricing Modal */}
+                <QuantityPricingModal
+                  isOpen={isPricingModalOpen}
+                  onClose={() => setIsPricingModalOpen(false)}
+                  quantity={quantity}
+                  setQuantity={setQuantity}
+                />
+                
+                {/* Legacy Quantity Modal - Keep for backward compatibility */}
                 <QuantityModal
                   isQuantityDropdownOpen={isQuantityDropdownOpen}
                   setIsQuantityDropdownOpen={setIsQuantityDropdownOpen}
@@ -382,20 +578,10 @@ export default function ProductDetails({ product }) {
                   setQuantity={setQuantity}
                   customQuantity={customQuantity}
                   setCustomQuantity={setCustomQuantity}
-                  quantityPricing={quantityPricing}
-                  isLoadingPricing={isLoadingPricing}
                   QUANTITY_TIERS={QUANTITY_TIERS}
                 />
               </div>
 
-              {/* Pricing */}
-              <div>
-                {mockVariationData ? (
-                  <ProductPricing product={product} selectedVariation={mockVariationData} quantity={quantity} selectedTechnique={technique} userRole={userRole} />
-                ) : (
-                  <p className="text-center text-gray-500">Please select product options to view pricing.</p>
-                )}
-              </div>
 
               {/* Interest Button */}
               <button
@@ -405,6 +591,86 @@ export default function ProductDetails({ product }) {
                 <MessageIcon className="w-5 h-5" />
                 <span>Are you interested in the product?</span>
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Debug Panel - Top right, vertical layout */}
+        <div className="fixed top-4 right-4 w-80 bg-orange-100 border-2 border-red-500 rounded-lg shadow-lg p-4 text-sm z-[99999] max-h-[calc(100vh-2rem)] overflow-y-auto">
+          <h4 className="font-semibold text-red-600 mb-3">Debug Information</h4>
+          
+          <div className="space-y-2">
+            <div><b>Base Price:</b> {product?.priceMain || 'N/A'} €</div>
+            <div><b>Setup Cost per Unit:</b> 
+              {(() => {
+                if (!selectedVariation) return 'N/A';
+                const metaData = selectedVariation.metaData || [];
+                const setupCostData = metaData.find(m => m.key === '_price_print_setup');
+                const setupCost = setupCostData ? parseFloat(setupCostData.value) : null;
+                const setupCostPerUnit = setupCost && quantity ? (setupCost / quantity).toFixed(4) : 'N/A';
+                return setupCostPerUnit !== 'N/A' ? 
+                  `${setupCostPerUnit} € (${setupCost}/${quantity})` : 'N/A';
+              })()}
+            </div>
+            <div><b>Matched Variation:</b> 
+              {selectedVariation ? (
+                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    <div className="px-3 py-1 border border-gray-300 rounded-md text-xs bg-white">
+                      #{selectedVariation.databaseId}
+                    </div>
+                    {(() => {
+                      const attrs = selectedVariation.attributes?.nodes || selectedVariation.attributes || [];
+                      return attrs.map((attr, index) => (
+                        <div key={index} className="px-3 py-1 border border-gray-300 rounded-md text-xs bg-white">
+                          {attr.label === 'technique' 
+                            ? formatTechniqueLabel(attr.value)
+                            : attr.label === 'size' 
+                            ? translateSizeLabel(attr.value)
+                            : formatAttributeValue(attr.value, attr.label)
+                          }
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                  <div className="text-xs font-medium text-blue-800">Price for {quantity}pcs: {(() => {
+                    const metaData = selectedVariation.metaData || [];
+                    // Find the right price tier for current quantity (exclude customer prices to match API)
+                    const priceKey = metaData.find(m => {
+                      const key = m.key;
+                      if (!key?.startsWith('_price_print_')) return false;
+                      // Skip customer prices since API uses preferCustomerPrice: false
+                      if (key.endsWith('_customer')) return false;
+                      const match = key.match(/^_price_print_(\d+)_((\d+)|infinity)$/);
+                      if (!match) return false;
+                      const min = Number(match[1]);
+                      const max = match[2] === 'infinity' ? Infinity : Number(match[2]);
+                      return quantity >= min && (max === Infinity ? true : quantity < max);
+                    });
+                    return priceKey ? `€${priceKey.value}` : 'N/A';
+                  })()}</div>
+                </div>
+              ) : 'None'}
+            </div>
+            <div><b>Print Price:</b> 
+              {productPrices?.find(p => p.quantity === quantity)?.printPricePerUnit?.toFixed(4) || 'N/A'} €
+            </div>
+            <div><b>Handling Cost:</b> {product?.singleProductFields?.manipulation || 0} €</div>
+            <div><b>Print Multiplier:</b> 
+              {productPrices?.find(p => p.quantity === quantity)?.brandMarkup?.printMarkup || 'N/A'}x
+            </div>
+            <div><b>Brand Multiplier:</b> 
+              {productPrices?.find(p => p.quantity === quantity)?.brandMultiplier || 'N/A'}x
+            </div>
+            <div><b>Product Markup:</b> 
+              {productPrices?.find(p => p.quantity === quantity)?.productMarkup || 'N/A'}x
+            </div>
+            
+            {/* Final Price per Unit */}
+            <div className="border-t border-gray-300 pt-2 mt-3">
+              <div><b>Final Product Price per Unit:</b> 
+                {productPrices?.find(p => p.quantity === quantity)?.finalProductPricePerUnit?.toFixed(4) || 'N/A'} €
+              </div>
             </div>
           </div>
         </div>

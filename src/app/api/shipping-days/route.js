@@ -872,7 +872,7 @@ function calculateShippingDays(brand, printing, quantity, printingTechniqueField
   // Get shipping options for the technique
   let shippingOption = SHIPPING_OPTIONS[actualTechnique] || SPECIAL_TECHNIQUES[actualTechnique];
   if (!shippingOption) {
-    console.warn(`No shipping option found for technique: ${actualTechnique}`);
+    // console.warn(`No shipping option found for technique: ${actualTechnique}`);
     return { standard: standardDefault + 5, express: expressDefault + 5 };
   }
 

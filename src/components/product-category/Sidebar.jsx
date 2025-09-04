@@ -6,7 +6,7 @@ import clsx from "clsx";
 
 import Tick from "@/icons/tick";
 import PrintingOption from "@/components/common/printing-options";
-import PriceRange from "@/components/product-category/price-range";
+import HistogramPriceSlider from "@/components/product-category/histogram-price-slider";
 import { productCategoryColors, productCategoryPrinting } from "@/utils/data";
 import Link from "next/link";
 
@@ -46,21 +46,27 @@ export default function Sidebar({ products = [], sidebarData }) {
     const [selectedColor, setSelectedColor] = useState("");
     const [selectedPrint, setSelectedPrint] = useState("");
 
-    // Price & Offers
-    const prices = useMemo(
-        () => products.map(p => p.price).filter(p => typeof p === "number"),
-        [products]
-    );
+    // Price calculation with better extraction logic
     const [minPrice, maxPrice] = useMemo(() => {
+        const prices = products.map(p => {
+            const price = p?.singleProductFields?.priceMainSale || 
+                         p?.singleProductFields?.priceMain || 
+                         p?.price;
+            
+            if (typeof price === 'string') {
+                const numPrice = parseFloat(price.replace(/[^0-9.-]+/g, ''));
+                return isNaN(numPrice) ? null : numPrice;
+            }
+            return typeof price === 'number' ? price : null;
+        }).filter(p => p !== null && p >= 0);
+
         if (!prices.length) return [0, 1000];
-        return [Math.min(...prices), Math.max(...prices)];
-    }, [prices]);
+        return [Math.floor(Math.min(...prices)), Math.ceil(Math.max(...prices))];
+    }, [products]);
 
     const [priceRange, setPriceRange] = useState([minPrice, maxPrice]);
-    const [offersChecked, setOffersChecked] = useState(false);
-    const offersCount = 13; // replace with dynamic count when available
 
-    // Combine multiple useEffect hooks into one for better performance
+    // Sync with URL and price changes
     useEffect(() => {
         // Sync selected color with URL query params
         const colorFromUrl = searchParams.get('filter_color');
@@ -68,13 +74,14 @@ export default function Sidebar({ products = [], sidebarData }) {
             setSelectedColor(colorFromUrl);
         }
 
-        // Sync price range when products change
-        setPriceRange([minPrice, maxPrice]);
-
-        // Sync offers filter
-        const offersFromUrl = searchParams.get('filter_offers');
-        if (offersFromUrl) {
-            setOffersChecked(offersFromUrl === "1");
+        // Sync price range from URL or use defaults
+        const minFromUrl = searchParams.get('price_min');
+        const maxFromUrl = searchParams.get('price_max');
+        
+        if (minFromUrl && maxFromUrl) {
+            setPriceRange([parseFloat(minFromUrl), parseFloat(maxFromUrl)]);
+        } else {
+            setPriceRange([minPrice, maxPrice]);
         }
     }, [searchParams, minPrice, maxPrice]);
 
@@ -86,10 +93,22 @@ export default function Sidebar({ products = [], sidebarData }) {
         router.replace(`?${params.toString()}`);
     }, [searchParams, router]);
 
-    // Update offers query when offers change
-    useEffect(() => {
-        updateQuery("filter_offers", offersChecked ? "1" : "");
-    }, [offersChecked, updateQuery]);
+    // Handle price range changes
+    const handlePriceRangeChange = useCallback((newRange) => {
+        setPriceRange(newRange);
+        const params = new URLSearchParams(searchParams.toString());
+        
+        // Only update URL if the range differs from min/max
+        if (newRange[0] !== minPrice || newRange[1] !== maxPrice) {
+            params.set('price_min', newRange[0].toString());
+            params.set('price_max', newRange[1].toString());
+        } else {
+            params.delete('price_min');
+            params.delete('price_max');
+        }
+        
+        router.replace(`?${params.toString()}`);
+    }, [searchParams, router, minPrice, maxPrice]);
 
     // Optimize color click handler with useCallback
     const handleColorClick = useCallback((c) => {
@@ -178,14 +197,18 @@ export default function Sidebar({ products = [], sidebarData }) {
                 </div>
             </section>
 
-            {/* Price & Offers */}
-            <PriceRange
+            {/* Histogram Price Slider */}
+            <HistogramPriceSlider
                 products={products}
-                offersCount={offersCount}
-                range={priceRange}
-                onRangeChange={setPriceRange}
-                offers={offersChecked}
-                onOffersChange={setOffersChecked}
+                minValue={minPrice}
+                maxValue={maxPrice}
+                initialRange={priceRange}
+                onRangeChange={handlePriceRangeChange}
+                currency="€"
+                bucketCount={20}
+                barHeight={60}
+                showLabels={true}
+                showInputs={true}
             />
         </div>
     );

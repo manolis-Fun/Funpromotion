@@ -17,7 +17,7 @@ import SearchModal from '../common/searchModal';
 import { menuSections, rootLinks } from '@/utils/data';
 import AvatarDropdown from './avatar-dropdown';
 
-const Navbar = () => {
+const Navbar = React.memo(() => {
   const [hoveredCategory, setHoveredCategory] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -29,12 +29,20 @@ const Navbar = () => {
   const dropdownRef = useRef(null);
 
   useEffect(() => {
+    let ticking = false;
+    
     const handleScroll = () => {
-      const scrollPosition = window.scrollY;
-      setIsScrolled(scrollPosition > 100);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollPosition = window.scrollY;
+          setIsScrolled(scrollPosition > 100);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -127,7 +135,7 @@ const Navbar = () => {
         </>
       ) : (
         <div className={`fixed left-0 right-0 z-[999] transition-all duration-300 mx-10 mt-7 rounded-3xl bg-white shadow-md ${isScrolled ? 'top-[10px]' : 'top-[60px]'}`}>
-          <div className={`transition-all duration-300 ${isScrolled ? 'max-h-0 overflow-hidden opacity-0' : 'max-h-[200px] opacity-100'}`}>
+          <div className={`transition-all duration-300 will-change-transform ${isScrolled ? 'transform scale-y-0 opacity-0 overflow-hidden origin-top' : 'transform scale-y-100 opacity-100'}`} style={{ height: isScrolled ? '0' : 'auto' }}>
             <div className="flex justify-between items-center px-5 py-4 inter-style">
               <Link href="/" className='cursor-pointer'>
                 <div className="text-2xl leading-[32px] font-bold flex items-center ml-[30px]">
@@ -268,6 +276,6 @@ const Navbar = () => {
       )}
     </>
   );
-};
+});
 
 export default Navbar;

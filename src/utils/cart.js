@@ -17,7 +17,7 @@ export async function addToCart(productId, quantity = 1, variationAttributes = n
             body.variation_attributes = variationAttributes;
         }
 
-        console.log('Adding to cart:', body);
+        // console.log('Adding to cart:', body);
 
         const response = await fetch('/api/cart/add', {
             method: 'POST',
@@ -33,7 +33,7 @@ export async function addToCart(productId, quantity = 1, variationAttributes = n
         }
 
         const data = await response.json();
-        console.log('Cart response:', data);
+        // console.log('Cart response:', data);
 
         return data;
     } catch (error) {

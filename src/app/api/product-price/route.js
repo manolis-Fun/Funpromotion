@@ -1,94 +1,121 @@
 import { NextResponse } from 'next/server';
 
-// Mock price multipliers, ideally fetch these from DB or config
-const BRAND_MULTIPLIERS = {
-  Midocean: 1,
-  Xindao: 1,
-  Stricker: 1,
-  PF: 1,
-  kits: 1,
-  Stock: 1,
-  Chillys: 1,
-  Mdisplay: 1,
-};
-
-// Tiered markup multipliers for Stock brand
-const STOCK_TIERS = {
-  "1.22": {
-    "1-24": 3.5, "25-49": 3.2, "50-99": 3.0, "100-249": 2.8,
-    "250-499": 2.6, "500-999": 2.4, "1000-2499": 2.2, "2500+": 2.0
+// Brand markup data - same as print-price API
+const BRAND_MARKUPS = [
+  {
+    "brand": "Xindao",
+    "priceMultiplier": 1.1,
+    "printMarkup": 1.4,
+    "fixedCost": null
   },
-  "3.05": {
-    "1-24": 3.2, "25-49": 2.9, "50-99": 2.7, "100-249": 2.5,
-    "250-499": 2.3, "500-999": 2.1, "1000-2499": 1.9, "2500+": 1.7
+  {
+    "brand": "Stricker",
+    "priceMultiplier": 1,
+    "printMarkup": 0.99,
+    "fixedCost": null
   },
-  "6.10": {
-    "1-24": 2.9, "25-49": 2.6, "50-99": 2.4, "100-249": 2.2,
-    "250-499": 2.0, "500-999": 1.8, "1000-2499": 1.6, "2500+": 1.4
+  {
+    "brand": "Midocean",
+    "priceMultiplier": 1,
+    "printMarkup": 1,
+    "fixedCost": null
   },
-  "12.20": {
-    "1-24": 2.6, "25-49": 2.3, "50-99": 2.1, "100-249": 1.9,
-    "250-499": 1.7, "500-999": 1.5, "1000-2499": 1.3, "2500+": 1.1
+  {
+    "brand": "PF",
+    "priceMultiplier": 1,
+    "printMarkup": 1,
+    "fixedCost": null
   },
-  "999.99": {
-    "1-24": 2.3, "25-49": 2.0, "50-99": 1.8, "100-249": 1.6,
-    "250-499": 1.4, "500-999": 1.2, "1000-2499": 1.0, "2500+": 0.8
+  {
+    "brand": "Mdisplay",
+    "priceMultiplier": 1,
+    "printMarkup": 1,
+    "fixedCost": null
+  },
+  {
+    "brand": "Stock",
+    "priceMultiplier": 1,
+    "printMarkup": 1,
+    "fixedCost": null
+  },
+  {
+    "brand": "kits",
+    "priceMultiplier": 1,
+    "printMarkup": 1,
+    "fixedCost": null
   }
+];
+
+// Product markup constants - TODO: Add actual product markup values
+const PRODUCT_MARKUP = {
+  // TODO: Add product markup values here
+  default: 1.0
 };
 
-// Helper: get tier name based on quantity
-const getQuantityTier = (qty) => {
-  if (qty <= 24) return "1-24";
-  if (qty <= 49) return "25-49";
-  if (qty <= 99) return "50-99";
-  if (qty <= 249) return "100-249";
-  if (qty <= 499) return "250-499";
-  if (qty <= 999) return "500-999";
-  if (qty <= 2499) return "1000-2499";
-  return "2500+";
-};
+// Helper to get brand markup data
+function getBrandMarkup(brandName) {
+  const brandData = BRAND_MARKUPS.find(b => b.brand === brandName);
+  return brandData || { brand: "Unknown", priceMultiplier: 1, printMarkup: 1, fixedCost: null };
+}
 
-// Helper: get price band
-const getPriceBand = (price) => {
-  if (price <= 1.22) return "1.22";
-  if (price <= 3.05) return "3.05";
-  if (price <= 6.10) return "6.10";
-  if (price <= 12.20) return "12.20";
-  return "999.99";
-};
+// Helper to parse numbers
+function parseNum(val) {
+  if (val == null) return null;
+  const n = Number(String(val).replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+}
 
-export async function GET(req) {
-  const { searchParams } = new URL(req.url);
-  const brand = searchParams.get('brand');
-  const price = parseFloat(searchParams.get('price_main') || '0');
-  const quantity = parseInt(searchParams.get('quantity') || '0', 10);
+export async function POST(req) {
+  try {
+    const body = await req.json();
+    
+    // Extract parameters from request body
+    const { totalPrintPricePerUnit, quantity, brand, basePrice } = body;
 
-  if (!brand || isNaN(price) || isNaN(quantity)) {
-    return NextResponse.json({ error: 'Missing or invalid parameters' }, { status: 400 });
+
+    // Get brand markup data
+    const brandMarkup = getBrandMarkup(brand);
+    
+    // Parse values
+    const printPricePerUnit = parseNum(totalPrintPricePerUnit) || 0;
+    const productBasePrice = parseNum(basePrice) || 0;
+    
+    // Calculate product price for each quantity
+    const results = (Array.isArray(quantity) ? quantity : [quantity]).map(qty => {
+      // If no print price (totalPrintPricePerUnit is 0), use base price for calculations
+      const priceForCalculation = printPricePerUnit > 0 ? printPricePerUnit : productBasePrice;
+      
+      // Product price calculation: (print price OR base price) * priceMultiplier * productMarkup
+      const productPriceWithMultiplier = priceForCalculation * brandMarkup.priceMultiplier;
+      const finalProductPricePerUnit = productPriceWithMultiplier * PRODUCT_MARKUP.default;
+      const finalProductPrice = finalProductPricePerUnit * qty;
+      
+      return {
+        quantity: qty,
+        printPricePerUnit,
+        productBasePrice,
+        priceForCalculation,
+        brandMultiplier: brandMarkup.priceMultiplier,
+        productMarkup: PRODUCT_MARKUP.default,
+        productPriceWithMultiplier,
+        finalProductPricePerUnit,
+        finalProductPrice,
+        brandMarkup: brandMarkup
+      };
+    });
+
+
+    // Return array of product pricing results
+    return NextResponse.json({
+      received: {
+        totalPrintPricePerUnit,
+        quantity,
+        brand,
+        basePrice
+      },
+      pricing: results
+    });
+  } catch (error) {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
-
-  const brandMultiplier = BRAND_MULTIPLIERS[brand] || 1;
-  let tierMultiplier = 1;
-
-  // Apply Stock brand tier logic if needed
-  if (brand === 'Stock') {
-    const band = getPriceBand(price);
-    const tier = getQuantityTier(quantity);
-    tierMultiplier = STOCK_TIERS[band]?.[tier] || 1;
-  }
-
-  const markup = brandMultiplier * tierMultiplier;
-  const perUnit = +(price * markup).toFixed(2);
-  const total = +(perUnit * quantity).toFixed(2);
-
-  return NextResponse.json({
-    total_price: total,
-    per_unit: perUnit,
-    breakdown: {
-      product_price: price,
-      markup: markup,
-    },
-    cached: false,
-    source: 'calculated'
-  });
 }

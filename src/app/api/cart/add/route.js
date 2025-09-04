@@ -4,7 +4,7 @@ export async function POST(req) {
     try {
         const body = await req.json();
 
-        console.log('Adding to cart:', body);
+        // console.log('Adding to cart:', body);
 
         // Validate product ID
         const productId = parseInt(body.id);
@@ -44,13 +44,13 @@ export async function POST(req) {
             }
         }
 
-        console.log('Cart item data:', cartItem);
+        // console.log('Cart item data:', cartItem);
 
         // Debug: Log what we're sending to WooCommerce
-        console.log('🚀 Sending to WooCommerce:', {
-            endpoint: 'https://react.woth.gr/wp-json/wc/store/cart/add-item',
-            payload: cartItem
-        });
+        // console.log('🚀 Sending to WooCommerce:', {
+        //     endpoint: 'https://react.woth.gr/wp-json/wc/store/cart/add-item',
+        //     payload: cartItem
+        // });
 
         // Direct call to WooCommerce Store API
         const res = await fetch('https://react.woth.gr/wp-json/wc/store/cart/add-item', {
@@ -63,7 +63,7 @@ export async function POST(req) {
         });
 
         const data = await res.json();
-        console.log('WooCommerce response:', data);
+        // console.log('WooCommerce response:', data);
 
         // Forward the response as-is, including any cookies WooCommerce sets
         const response = new NextResponse(JSON.stringify(data), {
