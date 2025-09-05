@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useMemo, useCallback, useState, useEffect } from "react"
+import React, { useMemo, useCallback, useState, useEffect, useRef } from "react"
 import Slider from "rc-slider"
 import "rc-slider/assets/index.css"
 
@@ -16,17 +16,47 @@ export default function HistogramPriceSlider({
   showLabels = true,
   showInputs = true
 }) {
-  const [localRange, setLocalRange] = useState(initialRange || [minValue, maxValue])
-  const [inputMin, setInputMin] = useState(String(localRange[0]))
-  const [inputMax, setInputMax] = useState(String(localRange[1]))
+  // Validate and set initial range
+  const validInitialRange = Array.isArray(initialRange) && 
+                           initialRange.length === 2 && 
+                           typeof initialRange[0] === 'number' && 
+                           typeof initialRange[1] === 'number' &&
+                           !isNaN(initialRange[0]) && !isNaN(initialRange[1]) &&
+                           initialRange[0] < initialRange[1]
+                           ? initialRange 
+                           : [minValue || 0, maxValue || 1000];
+                           
+  const [localRange, setLocalRange] = useState(validInitialRange)
+  const [inputMin, setInputMin] = useState(String(validInitialRange[0]))
+  const [inputMax, setInputMax] = useState(String(validInitialRange[1]))
+  const [isUserDragging, setIsUserDragging] = useState(false)
+  const isUpdatingFromUser = useRef(false)
 
   useEffect(() => {
-    if (initialRange) {
-      setLocalRange(initialRange)
-      setInputMin(String(initialRange[0]))
-      setInputMax(String(initialRange[1]))
+    // Don't update if user is currently dragging or if this is from a user-initiated change
+    if (isUserDragging || isUpdatingFromUser.current) {
+      return;
     }
-  }, [initialRange])
+    
+    const validRange = Array.isArray(initialRange) && 
+                      initialRange.length === 2 && 
+                      typeof initialRange[0] === 'number' && 
+                      typeof initialRange[1] === 'number' &&
+                      !isNaN(initialRange[0]) && !isNaN(initialRange[1]) &&
+                      initialRange[0] < initialRange[1];
+                      
+    if (validRange) {
+      // Only update if the new range is actually different from current local range
+      const [currentMin, currentMax] = localRange;
+      const [newMin, newMax] = initialRange;
+      
+      if (currentMin !== newMin || currentMax !== newMax) {
+        setLocalRange(initialRange)
+        setInputMin(String(initialRange[0]))
+        setInputMax(String(initialRange[1]))
+      }
+    }
+  }, [initialRange, isUserDragging, localRange])
 
   const priceData = useMemo(() => {
     const prices = products
@@ -77,7 +107,21 @@ export default function HistogramPriceSlider({
     setLocalRange(value)
     setInputMin(String(value[0]))
     setInputMax(String(value[1]))
+    // Don't call onRangeChange during dragging - wait for onAfterChange
+  }, [])
+  
+  const handleBeforeChange = useCallback(() => {
+    setIsUserDragging(true)
+  }, [])
+  
+  const handleChangeComplete = useCallback((value) => {
+    setIsUserDragging(false)
+    isUpdatingFromUser.current = true
     onRangeChange?.(value)
+    // Reset the flag after a brief delay to allow parent re-renders
+    setTimeout(() => {
+      isUpdatingFromUser.current = false
+    }, 100)
   }, [onRangeChange])
 
   const handleInputChange = useCallback((type, value) => {
@@ -94,7 +138,11 @@ export default function HistogramPriceSlider({
     }
 
     setLocalRange(newRange)
+    isUpdatingFromUser.current = true
     onRangeChange?.(newRange)
+    setTimeout(() => {
+      isUpdatingFromUser.current = false
+    }, 100)
   }, [localRange, priceData, onRangeChange])
 
   const handleInputBlur = useCallback((type) => {
@@ -118,6 +166,8 @@ export default function HistogramPriceSlider({
     max: priceData.max,
     value: localRange,
     onChange: handleSliderChange,
+    onBeforeChange: handleBeforeChange,
+    onChangeComplete: handleChangeComplete,
     allowCross: false,
     trackStyle: [{ 
       backgroundColor: "#ff7700", 
@@ -147,12 +197,10 @@ export default function HistogramPriceSlider({
       height: 6,
       borderRadius: 3
     },
-  }), [priceData.min, priceData.max, localRange, handleSliderChange])
+  }), [priceData.min, priceData.max, localRange, handleSliderChange, handleBeforeChange, handleChangeComplete])
 
   return (
     <div className="w-full">
-      <h2 className="text-base font-medium mb-4 uppercase">Price Range</h2>
-      
       {showInputs && (
         <div className="flex justify-between gap-4 mb-6">
           <div className="flex-1">

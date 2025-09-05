@@ -1,87 +1,36 @@
-# Funpromotion
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-E-commerce platform with separate frontend (Next.js) and backend (Express) services.
+## Getting Started
 
-## Project Structure
+First, run the development server:
 
-```
-Funpromotion/
-├── frontend/          # Next.js frontend application
-│   ├── src/           # Source code
-│   ├── public/        # Static assets
-│   ├── package.json   # Frontend dependencies
-│   └── ...            # Next.js configuration files
-├── backend/           # Express backend API
-│   ├── routes/        # API routes
-│   ├── server.js      # Main server file
-│   ├── package.json   # Backend dependencies
-│   └── .env           # Environment variables
-└── package.json       # Root package.json for managing both services
-```
-
-## Quick Start
-
-### Install All Dependencies
 ```bash
-npm run install:all
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-### Development Mode
-```bash
-# Start frontend (Next.js on port 3000)
-npm run dev:frontend
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-# Start backend (Express on port 3001)  
-npm run dev:backend
-```
+You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
 
-### Production Mode
-```bash
-# Build and start frontend
-npm run build:frontend
-npm run start:frontend
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-# Start backend
-npm run start:backend
-```
+## Learn More
 
-## Individual Services
+To learn more about Next.js, take a look at the following resources:
 
-### Frontend (Next.js)
-- **Location**: `./frontend/`
-- **Port**: 3000 (fixed)
-- **Technology**: Next.js, React, Tailwind CSS
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-### Backend (Express)  
-- **Location**: `./backend/`
-- **Port**: 3001 (fixed)
-- **Technology**: Express, Elasticsearch
-- **API Endpoints**:
-  - `GET /api/search` - Basic search
-  - `POST /api/search` - Advanced search  
-  - `POST /api/search-kit/_msearch` - Elasticsearch multi-search
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Environment Setup
+## Deploy on Vercel
 
-1. Configure frontend environment variables in `frontend/.env`
-2. Configure backend environment variables in `backend/.env`:
-   ```env
-   PORT=3001
-   ELASTICSEARCH_URL=http://49.12.168.18:9200
-   ELASTICSEARCH_API_KEY=your_api_key_here
-   NODE_ENV=development
-   ```
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-## Development
-
-- Frontend runs on `http://localhost:3000` (fixed port)
-- Backend API runs on `http://localhost:3001` (fixed port)
-- Both services can run independently
-- Use `npm start` from root to run both services in parallel
-
-## Environment Configuration
-
-Frontend environment variables (`frontend/.env`):
-```env
-NEXT_PUBLIC_BACKEND_URL="http://localhost:3001"
-```
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

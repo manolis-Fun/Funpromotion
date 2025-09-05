@@ -1,0 +1,26 @@
+// Color name to hex/CSS value mapping
+export const COLOR_NAME_TO_VALUE = {
+    "Beige": "#F5F5DC",
+    "Black": "#000000",
+    "Blue": "#0000FF",
+    "Bronze": "#CD7F32",
+    "Brown": "#A52A2A",
+    "Burgundy": "#800020",
+    "Dark blue": "#00008B",
+    "Dark grey": "#A9A9A9",
+    "Fuchsia": "#FF00FF",
+    "Gold": "#FFD700",
+    "Green": "#008000",
+    "Grey": "#808080",
+    "Multicolour": "linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet)",
+    "N/A": "#FFFFFF",
+    "Orange": "#FFA500",
+    "Pink": "#FFC0CB",
+    "Purple": "#800080",
+    "Red": "#FF0000",
+    "Silver": "#C0C0C0",
+    "Transparent": "transparent",
+    "Turquoise": "#40E0D0",
+    "White": "#FFFFFF",
+    "Yellow": "#FFFF00"
+};

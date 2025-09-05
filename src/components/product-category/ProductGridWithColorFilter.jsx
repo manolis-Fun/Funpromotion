@@ -8,6 +8,7 @@ import Pagination from '@/components/common/Pagination';
 import TopPickCards from './top-pick-cards';
 import SortDropdown from '@/components/common/SortDropdown';
 import { graphqlClient } from '@/lib/graphql';
+import { COLOR_NAME_TO_VALUE } from '@/constants/colors';
 
 const DEFAULT_ITEMS_PER_PAGE = 20;
 const TOP_PICKS_COUNT = 4;
@@ -191,9 +192,6 @@ export default function ProductGridWithColorFilter({
                         <h1 className="text-3xl font-bold flex items-center gap-4">
                             Top picks <div className="mt-1 bg-[#3f3f3f] h-[3px] w-[200px]"></div>
                         </h1>
-                        <div className='flex items-center gap-2'>
-                            <SortDropdown />
-                        </div>
                     </div>
                     <TopPickCards data={topPicks} />
                 </div>
@@ -306,7 +304,30 @@ export const ProductCard = React.memo(({ product, onWishlistClick, isWishlisted 
                             <div className="w-full h-full bg-white rounded max-w-[259px] max-h-[259px] min-h-[259px] min-w-[259px]"></div>
                         )}
                     </div>
-
+{product.colors && product.colors.length > 0 && (
+                        <div className="mb-2 flex space-x-2">
+                            {product.colors.slice(0, 5).map((colorName, idx) => {
+                                const colorValue = COLOR_NAME_TO_VALUE[colorName] || "#CCCCCC";
+                                const isMulticolor = colorValue.includes('gradient');
+                                return (
+                                    <div
+                                        key={idx}
+                                        className="w-6 h-6 rounded-full border border-gray-300 shadow-sm"
+                                        style={isMulticolor ? 
+                                            { background: colorValue } : 
+                                            { backgroundColor: colorValue }
+                                        }
+                                        title={colorName}
+                                    />
+                                );
+                            })}
+                            {product.colors.length > 5 && (
+                                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-200 border border-gray-300 text-xs text-gray-600">
+                                    +{product.colors.length - 5}
+                                </div>
+                            )}
+                        </div>
+                    )}
                     {/* Title */}
                     <h3 className="text-gray-900 font-semibold h-[52px] mt-8 leading-[26px] text-lg mb-2 manrope-font">
                         {product?.title?.length > 21 ? product?.title.slice(0, 21) : product?.title || product?.name?.slice(0, 30) + "..."}

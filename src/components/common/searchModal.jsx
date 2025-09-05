@@ -20,8 +20,7 @@ const SearchModal = React.memo(function SearchModal({ query, onClose }) {
         const searchProducts = async () => {
             setLoading(true);
             try {
-                const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-                const response = await fetch(`${backendUrl}/api/search?q=${encodeURIComponent(query)}&size=10`);
+                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&size=10`);
                 
                 if (!response.ok) {
                     throw new Error('Search failed');
@@ -31,7 +30,6 @@ const SearchModal = React.memo(function SearchModal({ query, onClose }) {
                 setResults(data.hits || []);
                 setError(null);
             } catch (err) {
-                console.error("Search error:", err);
                 setError("Failed to search products. Please try again.");
                 setResults([]);
             } finally {

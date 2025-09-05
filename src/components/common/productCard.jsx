@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { COLOR_NAME_TO_VALUE } from "@/constants/colors";
 
 const ProductCard = ({ products }) => {
   return (
