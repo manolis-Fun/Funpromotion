@@ -9,6 +9,7 @@ export default function LatestProducts({ products = [] }) {
         line: false,
         fullWidth: true,
     }
+    // console.log("product---------->",products)
     return (
         <div className="bg-[#f8f8f8] py-12 px-4">
             <div className='max-w-7xl mx-auto'>

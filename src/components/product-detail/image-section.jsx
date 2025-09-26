@@ -53,23 +53,6 @@ const ImageSection = ({ product, selectedImage, setSelectedImage, mainImage, gal
 
                         {/* Gallery Images - Vertical Slider */}
                         <div className="absolute top-4 left-4 flex flex-col items-center z-10">
-                            {/* Up Arrow */}
-                            {totalImages > verticalImagesPerView && (
-                                <button
-                                    onClick={() => handleVerticalScroll('up')}
-                                    disabled={!canScrollUp}
-                                    className={`mb-2 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center transition-all ${
-                                        canScrollUp 
-                                            ? 'hover:bg-gray-100 cursor-pointer' 
-                                            : 'opacity-50 cursor-not-allowed'
-                                    }`}
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                                    </svg>
-                                </button>
-                            )}
-                            
                             {/* Images Container */}
                             <div className="flex flex-col space-y-2 overflow-hidden">
                                 {visibleVerticalImages.map((image, index) => {
@@ -81,10 +64,10 @@ const ImageSection = ({ product, selectedImage, setSelectedImage, mainImage, gal
                                             onClick={() => setSelectedImage(image)}
                                             onMouseEnter={() => setHoveredImage(image)}
                                             onMouseLeave={() => setHoveredImage(null)}
-                                            className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all shadow-lg ${
+                                            className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all shadow-md ${
                                                 selectedImage === image
-                                                    ? 'border-blue-500 ring-2 ring-blue-200'
-                                                    : 'border-white hover:border-gray-300'
+                                                    ? 'border-gray-500 ring-2 ring-gray-300 bg-gray-100'
+                                                    : 'border-gray-200 hover:border-gray-400 bg-gray-50'
                                             }`}
                                         >
                                             <Image
@@ -98,22 +81,40 @@ const ImageSection = ({ product, selectedImage, setSelectedImage, mainImage, gal
                                     )
                                 })}
                             </div>
-                            
-                            {/* Down Arrow */}
+
+                            {/* Navigation Arrows - Bottom */}
                             {totalImages > verticalImagesPerView && (
-                                <button
-                                    onClick={() => handleVerticalScroll('down')}
-                                    disabled={!canScrollDown}
-                                    className={`mt-2 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center transition-all ${
-                                        canScrollDown 
-                                            ? 'hover:bg-gray-100 cursor-pointer' 
-                                            : 'opacity-50 cursor-not-allowed'
-                                    }`}
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </button>
+                                <div className="flex space-x-2 mt-2">
+                                    {/* Up Arrow */}
+                                    <button
+                                        onClick={() => handleVerticalScroll('up')}
+                                        disabled={!canScrollUp}
+                                        className={`w-10 h-10 rounded-full bg-gray-200 shadow-md flex items-center justify-center transition-all ${
+                                            canScrollUp
+                                                ? 'hover:bg-gray-300 cursor-pointer text-gray-700'
+                                                : 'opacity-50 cursor-not-allowed text-gray-400'
+                                        }`}
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                        </svg>
+                                    </button>
+
+                                    {/* Down Arrow */}
+                                    <button
+                                        onClick={() => handleVerticalScroll('down')}
+                                        disabled={!canScrollDown}
+                                        className={`w-10 h-10 rounded-full bg-gray-200 shadow-md flex items-center justify-center transition-all ${
+                                            canScrollDown
+                                                ? 'hover:bg-gray-300 cursor-pointer text-gray-700'
+                                                : 'opacity-50 cursor-not-allowed text-gray-400'
+                                        }`}
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+                                </div>
                             )}
                         </div>
                     </div>

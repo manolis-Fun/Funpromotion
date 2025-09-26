@@ -9,6 +9,7 @@ import TopPickCards from './top-pick-cards';
 import SortDropdown from '@/components/common/SortDropdown';
 import { graphqlClient } from '@/lib/graphql';
 import { COLOR_NAME_TO_VALUE } from '@/constants/colors';
+import { FiHeart, FiCheck } from 'react-icons/fi';
 
 const DEFAULT_ITEMS_PER_PAGE = 20;
 const TOP_PICKS_COUNT = 4;
@@ -188,11 +189,20 @@ export default function ProductGridWithColorFilter({
             {/* Top Picks only on first page and only if there are enough products */}
             {currentPage === 1 && topPicks.length > 0 && (
                 <div className="container mx-auto py-8 max-w-[1136px]">
-                    <div className='flex justify-between items-center mb-8'>
-                        <h1 className="text-3xl font-bold flex items-center gap-4">
-                            Top picks <div className="mt-1 bg-[#3f3f3f] h-[3px] w-[200px]"></div>
-                        </h1>
-                    </div>
+                         <div className="flex items-center mb-8">
+  <h1 className="text-[30px] leading-[36px] font-extrabold flex items-center gap-4 manrope-font text-[#3f3f3f]">
+    Top picks
+    <div className="flex items-center flex-1">
+      <div className="h-[4px] w-[172px] bg-[#3f3f3f] flex-1"></div>
+      <div className="flex space-x-2 ml-2">
+        <div className="w-3 h-[4px] bg-[#3f3f3f]"></div>
+        <div className="w-3 h-[4px] bg-[#3f3f3f]"></div>
+        <div className="w-3 h-[4px] bg-[#3f3f3f]"></div>
+        <div className="w-2 h-[4px] bg-[#3f3f3f]"></div>
+      </div>
+    </div>
+  </h1>
+</div>
                     <TopPickCards data={topPicks} />
                 </div>
             )}
@@ -200,7 +210,18 @@ export default function ProductGridWithColorFilter({
             {/* Category title and paginated products */}
             <div id="products-section" className="container mx-auto py-8">
                 <div className="flex items-center justify-between mb-8">
-                    <h1 className="text-3xl font-bold">{categoryName ? categoryName : 'All Products'}</h1>
+                 <h1 className="text-[30px] leading-[36px] font-extrabold flex items-center gap-4 manrope-font text-[#3f3f3f]">
+          Products
+    <div className="flex items-center flex-1">
+      <div className="h-[4px] w-[172px] bg-[#3f3f3f] flex-1"></div>
+      <div className="flex space-x-2 ml-2">
+        <div className="w-3 h-[4px] bg-[#3f3f3f]"></div>
+        <div className="w-3 h-[4px] bg-[#3f3f3f]"></div>
+        <div className="w-3 h-[4px] bg-[#3f3f3f]"></div>
+        <div className="w-2 h-[4px] bg-[#3f3f3f]"></div>
+      </div>
+    </div>
+  </h1>
                     <span className="text-gray-500">
                         Showing {currentPage === 1 ? TOP_PICKS_COUNT + 1 : (indexOfFirstProduct + TOP_PICKS_COUNT + 1)}-{Math.min(indexOfLastProduct + TOP_PICKS_COUNT, filteredProducts.length)} of {filteredProducts.length}
                     </span>
@@ -244,6 +265,11 @@ export default function ProductGridWithColorFilter({
 export const ProductCard = React.memo(({ product, onWishlistClick, isWishlisted }) => {
     const [isHovered, setIsHovered] = useState(false);
     const [videoLoaded, setVideoLoaded] = useState(false);
+    const dispatch = useDispatch();
+    const wishlistFromStore = useSelector(state => state.wishlist.items);
+
+    // Use local wishlist state if isWishlisted prop is not provided
+    const isInWishlist = isWishlisted !== undefined ? isWishlisted : wishlistFromStore.some(item => item.id === product?.id);
 
     const displayPrice = useMemo(() =>
         product?.singleProductFields?.priceMainSale ||
@@ -274,10 +300,47 @@ export const ProductCard = React.memo(({ product, onWishlistClick, isWishlisted 
                 {/* Actual Card */}
                 <div className="bg-[#F9F9F9] rounded-xl border border-gray-200 
                           p-4 flex flex-col text-left transition-all duration-300 
-                          group-hover:shadow-lg group-hover:rounded-b-none group-hover:border-b-transparent">
+                          group-hover:shadow-lg group-hover:rounded-b-none group-hover:border-b-transparent
+                          group-hover:scale-105 transform origin-center">
 
                     {/* Product Image */}
                     <div className="relative w-full aspect-square mb-4 rounded-lg overflow-hidden bg-white">
+                        {/* Wishlist Icon */}
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+
+                                // If onWishlistClick is provided, use it
+                                if (onWishlistClick) {
+                                    onWishlistClick(e);
+                                } else {
+                                    // Otherwise handle wishlist internally
+                                    if (isInWishlist) {
+                                        dispatch(removeFromWishlist(product?.id));
+                                    } else {
+                                        dispatch(addToWishlist({
+                                            id: product?.id,
+                                            name: product?.name || product?.title,
+                                            slug: product?.slug,
+                                            price: displayPrice,
+                                            image: product?.image
+                                        }));
+                                    }
+                                }
+                            }}
+                            className="absolute top-3 right-3 z-10 bg-white rounded-full p-2 shadow-md
+                                     opacity-0 group-hover:opacity-100 transition-opacity duration-200
+                                     hover:scale-110 transform"
+                            aria-label={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
+                        >
+                            {isInWishlist ? (
+                                <FiCheck className="w-5 h-5 text-green-500" />
+                            ) : (
+                                <FiHeart className="w-5 h-5 text-gray-600 hover:text-red-500" />
+                            )}
+                        </button>
+
                         {product?.image?.sourceUrl ? (
                             <>
                                 <img
@@ -304,7 +367,7 @@ export const ProductCard = React.memo(({ product, onWishlistClick, isWishlisted 
                             <div className="w-full h-full bg-white rounded max-w-[259px] max-h-[259px] min-h-[259px] min-w-[259px]"></div>
                         )}
                     </div>
-{product.colors && product.colors.length > 0 && (
+                    {product.colors && product.colors.length > 0 && (
                         <div className="mb-2 flex space-x-2">
                             {product.colors.slice(0, 5).map((colorName, idx) => {
                                 const colorValue = COLOR_NAME_TO_VALUE[colorName] || "#CCCCCC";
@@ -312,7 +375,7 @@ export const ProductCard = React.memo(({ product, onWishlistClick, isWishlisted 
                                 return (
                                     <div
                                         key={idx}
-                                        className="w-6 h-6 rounded-full border border-gray-300 shadow-sm"
+                                        className="w-[18px] h-[18px] rounded-[6px] border border-gray-300 shadow-sm"
                                         style={isMulticolor ? 
                                             { background: colorValue } : 
                                             { backgroundColor: colorValue }
@@ -329,36 +392,44 @@ export const ProductCard = React.memo(({ product, onWishlistClick, isWishlisted 
                         </div>
                     )}
                     {/* Title */}
-                    <h3 className="text-gray-900 font-semibold h-[52px] mt-8 leading-[26px] text-lg mb-2 manrope-font">
+                    <h3 className="text-gray-900 font-semibold  mt-[8px] leading-[26px] text-lg mb-2 manrope-font">
                         {product?.title?.length > 21 ? product?.title.slice(0, 21) : product?.title || product?.name?.slice(0, 30) + "..."}
                     </h3>
 
                     {/* Price */}
-                    <span className="text-[#FF7700] text-sm py-2 font-semibold block h-12">
+                    <span className="text-[#FF7700] text-sm  font-semibold block ">
                         {displayPrice}
                     </span>
                 </div>
 
                 {/* Hover Description (only for hovered card) */}
-                <div className="absolute top-full left-0 w-full bg-[#F9F9F9] min-w-[240px] px-4 py-3 z-20 
+                <div className="absolute top-full left-0 right-0 w-full bg-[#F9F9F9]  px-4 pb-4 z-20 group-hover:scale-105 
                           border border-t-0 border-gray-200 rounded-b-xl shadow-lg 
                           opacity-0 translate-y-2 pointer-events-none 
                           group-hover:translate-y-0 group-hover:opacity-100 group-hover:pointer-events-auto 
                           transition-all duration-300 ease-in-out">
-
-                    <div className="flex items-center mb-1">
-                        <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                    <div className="flex items-center mb-1 text-[#7b7b7b] text-[13px] font-bold">
+                        <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
                         In stock: ({product?.stockQuantity ?? 0})
                     </div>
-
-                    {product?.shortDescription && (
-                        <div
-                            className="pt-2"
-                            dangerouslySetInnerHTML={{
-                                __html: product?.shortDescription?.replace(/\n$/, "") || "",
-                            }}
-                        />
-                    )}
+                    <p className='w-full h-[1px] bg-gray-300 mt-4'></p>
+                        {product?.shortDescription && (
+                            <div className="product-card-description">
+                                {(() => {
+                                    // Strip HTML tags and get plain text
+                                    const plainText = product.shortDescription
+                                        .replace(/<[^>]*>/g, '') // Remove HTML tags
+                                        .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+                                        .trim();
+                                    
+                                    // Truncate to approximately 3 lines (about 80 characters)
+                                    if (plainText.length > 80) {
+                                        return plainText.substring(0, 80) + '...';
+                                    }
+                                    return plainText;
+                                })()}
+                            </div>
+                        )}
                 </div>
             </div>
         </Link>

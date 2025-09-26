@@ -9,14 +9,14 @@ export default function Header() {
         €20 DISCOUNT FOR ONLINE ORDERS
       </div>
 
-      <div className=" flex justify-between items-center bg-[#FF6600] px-5 py-2 text-white text-[12px] leading-[14px]">
-        <div className="flex space-x-4 manrope-font ml-[30px] ">
-          <a href="https://react.woth.gr/etaireia/" className="hover:underline manrope-font  ">COMPANY</a>
+      <div className="flex justify-center lg:justify-between items-center bg-[#FF6600] px-2 lg:px-5 py-2 text-white text-[12px] leading-[14px]">
+        <div className="hidden lg:flex space-x-4 manrope-font ml-[30px]">
+          <a href="https://react.woth.gr/etaireia/" className="hover:underline manrope-font">COMPANY</a>
           <a href="https://react.woth.gr/blog/" className="hover:underline">NEWS</a>
           <a href="https://react.woth.gr/katalogoi/" className="hover:underline">CATALOGS</a>
-          <a href="https://react.woth.gr/epikoinonia/" className="hover:underline ">COMMUNICATION</a>
+          <a href="https://react.woth.gr/epikoinonia/" className="hover:underline">COMMUNICATION</a>
         </div>
-        <div className="flex space-x-3 text-lg inter-style  mr-[30px]">
+        <div className="flex space-x-3 text-lg inter-style mr-0 lg:mr-[30px]">
           <a href="https://www.facebook.com/FunPromotion.gr/" className="hover:opacity-75" target="_blank"><FaFacebookF /></a>
           <a href="https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Ffunpromotion_gr%2F&is_from_rle" className="hover:opacity-75" target="_blank"><FaInstagram /></a>
           <a href="https://www.linkedin.com/company/funpromotion/" className="hover:opacity-75" target="_blank"><FaLinkedinIn /></a>

@@ -12,6 +12,11 @@
     --foreground: #171717;
 }
 
+html, body {
+    min-height: 100vh;
+    height: 100%;
+}
+
 @media (prefers-color-scheme: dark) {
     :root {
         /* --background: #0a0a0a; */
@@ -51,12 +56,46 @@
         }
     }
 
+    @keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slideInRight {
+        0% {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
     .modal-enter {
         animation: slideDown 0.3s ease forwards;
     }
 
     .modal-content-enter {
         animation: fadeIn 0.4s ease forwards;
+    }
+
+    .animate-fadeIn {
+        animation: fadeIn 0.4s ease forwards;
+    }
+
+    .animate-fadeInUp {
+        animation: fadeInUp 0.5s ease forwards;
+    }
+
+    .animate-slideInRight {
+        animation: slideInRight 0.4s ease forwards;
     }
 
     .animate-scroll {
@@ -75,10 +114,38 @@
         display: none;
     }
 
+    /* Hide scrollbar for techniques slider */
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+
     .manrope-font {
-        font-family: "Manrope", sans-serif;
+        font-family: "Manrope", Arial, Helvetica, sans-serif !important;
         font-optical-sizing: auto;
         font-style: normal;
+        font-display: swap;
+    }
+
+    /* Specifically target product card titles */
+    h3.manrope-font {
+        font-family: "Manrope", Arial, Helvetica, sans-serif !important;
+        font-weight: 600 !important;
+    }
+
+    /* Product card short description styling */
+    .product-card-description {
+        font-family: "inter", Arial, Helvetica, sans-serif;
+        font-size: 14px;
+        line-height: 1.4;
+        color: #6b7280;
+        padding-top: 8px;
+        word-wrap: break-word;
+        display: block;
     }
 
     /* Custom Inter style with specific properties */
@@ -226,4 +293,26 @@
 .category-banner-swiper .swiper-slide {
     margin-right: 10px !important;
     padding: 8px !important;
+}
+
+/* Banner Section Swiper Styles */
+.banner-swiper {
+    padding-bottom: 40px;
+}
+
+.banner-swiper .swiper-pagination {
+    bottom: 0;
+}
+
+.banner-swiper .swiper-pagination-bullet {
+    background: #d1d5db;
+    width: 8px;
+    height: 8px;
+    opacity: 1;
+}
+
+.banner-swiper .swiper-pagination-bullet-active {
+    background: #FF6600;
+    width: 24px;
+    border-radius: 4px;
 }

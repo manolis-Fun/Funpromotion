@@ -14,11 +14,24 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className="antialiased" suppressHydrationWarning={true}>
+      <head>
+        <link 
+          rel="preload" 
+          href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" 
+          as="style"
+        />
+        <link 
+          href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" 
+          rel="stylesheet"
+        />
+      </head>
+      <body className="antialiased min-h-screen flex flex-col" suppressHydrationWarning={true}>
         <Providers>
           <Header />
           <Navbar />
-          {children}
+          <main className="flex-1">
+            {children}
+          </main>
           <FooterSection />
         </Providers>
       </body>

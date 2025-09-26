@@ -107,8 +107,9 @@ export default function HistogramPriceSlider({
     setLocalRange(value)
     setInputMin(String(value[0]))
     setInputMax(String(value[1]))
-    // Don't call onRangeChange during dragging - wait for onAfterChange
-  }, [])
+    // Call onRangeChange during dragging for real-time updates
+    onRangeChange?.(value)
+  }, [onRangeChange])
   
   const handleBeforeChange = useCallback(() => {
     setIsUserDragging(true)
@@ -295,18 +296,6 @@ export default function HistogramPriceSlider({
           <span>{currency}{formatPrice(priceData.max)}</span>
         </div>
       )}
-
-      <div className="mt-4 text-sm text-gray-600">
-        {products.filter(p => {
-          const price = p?.singleProductFields?.priceMainSale || 
-                       p?.singleProductFields?.priceMain || 
-                       p?.price
-          const numPrice = typeof price === 'string' 
-            ? parseFloat(price.replace(/[^0-9.-]+/g, ''))
-            : price
-          return numPrice >= localRange[0] && numPrice <= localRange[1]
-        }).length} products in selected range
-      </div>
     </div>
   )
 }

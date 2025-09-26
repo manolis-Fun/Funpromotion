@@ -1,5 +1,12 @@
-import { Client } from '@elastic/elasticsearch';
+const express = require('express');
+const cors = require('cors');
+const { Client } = require('@elastic/elasticsearch');
+require('dotenv').config();
 
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+// Elasticsearch client setup
 const client = new Client({
   node: process.env.ELASTICSEARCH_URL || 'http://49.12.168.18:9200',
   auth: {
@@ -10,14 +17,43 @@ const client = new Client({
   }
 });
 
-export async function POST(request) {
+// Middleware
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'x-elastic-client-meta']
+}));
+
+app.use(express.json({ limit: '50mb' }));
+app.use(express.text({ limit: '50mb' }));
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    elasticsearch: process.env.ELASTICSEARCH_URL 
+  });
+});
+
+// Main search endpoint - exact replica of SearchKit functionality
+app.post('/api/search-kit/_msearch', async (req, res) => {
   try {
-    let rawBody = await request.text();
+    let rawBody;
+    
+    // Handle different content types
+    if (typeof req.body === 'string') {
+      rawBody = req.body;
+    } else {
+      rawBody = JSON.stringify(req.body);
+    }
+
+    console.log('📝 Received request:', rawBody);
 
     // Handle SearchKit/Algolia format requests
     let parsedBody;
     let operations = [];
-    let requestParams = []; // Store params for each request - declare in broader scope
+    let requestParams = []; // Store params for each request
     
     try {
       parsedBody = JSON.parse(rawBody);
@@ -30,6 +66,9 @@ export async function POST(request) {
         const params = request.params || {};
         requestParams.push(params); // Store params for later use
         
+        console.log(`🔍 Processing request for index: ${indexName}`);
+        console.log(`📋 Request params:`, JSON.stringify(params, null, 2));
+        
         // Add index header
         operations.push({ index: indexName });
         
@@ -38,35 +77,9 @@ export async function POST(request) {
         
         if (params.query && params.query.trim()) {
           query = {
-            bool: {
-              should: [
-                {
-                  multi_match: {
-                    query: params.query,
-                    fields: ["name^3", "description", "shortDescription"],
-                    type: "phrase_prefix",
-                    boost: 3
-                  }
-                },
-                {
-                  multi_match: {
-                    query: params.query,
-                    fields: ["name^2", "description", "shortDescription"],
-                    fuzziness: "AUTO",
-                    prefix_length: 1,
-                    max_expansions: 10
-                  }
-                },
-                {
-                  wildcard: {
-                    "name.keyword": {
-                      value: `*${params.query.toLowerCase()}*`,
-                      boost: 2
-                    }
-                  }
-                }
-              ],
-              minimum_should_match: 1
+            multi_match: {
+              query: params.query,
+              fields: ["name^2", "description", "shortDescription"]
             }
           };
         }
@@ -110,6 +123,7 @@ export async function POST(request) {
         
         // Handle numericFilters (used by SearchKit for range refinements)
         if (params.numericFilters && Array.isArray(params.numericFilters)) {
+          console.log('🔢 Processing numericFilters:', params.numericFilters);
           for (const numericFilter of params.numericFilters) {
             // Handle filters like "price>=1", "price<=10"
             if (typeof numericFilter === 'string') {
@@ -148,8 +162,10 @@ export async function POST(request) {
           }
         }
         
-        // Handle facetFilters (used by SearchKit for refinements)
+        // Handle facetFilters (used by SearchKit for refinements) - CRITICAL FOR CATEGORY FILTERING
         if (params.facetFilters && Array.isArray(params.facetFilters)) {
+          console.log('🎯 Processing facetFilters:', params.facetFilters);
+          
           // Group filters by attribute for proper OR logic
           const attributeGroups = {};
           
@@ -159,6 +175,7 @@ export async function POST(request) {
               const orFilters = facetFilterGroup.map(facetFilter => {
                 const [field, value] = facetFilter.split(':');
                 const fieldToUse = `${field.trim()}.keyword`;
+                console.log(`🔗 OR Filter: ${fieldToUse} = ${value.trim()}`);
                 return {
                   term: { [fieldToUse]: value.trim() }
                 };
@@ -178,6 +195,8 @@ export async function POST(request) {
               const [field, value] = facetFilterGroup.split(':');
               const fieldKey = field.trim();
               const fieldToUse = `${fieldKey}.keyword`;
+              
+              console.log(`🎯 Facet Filter: ${fieldToUse} = ${value.trim()}`);
               
               if (!attributeGroups[fieldKey]) {
                 attributeGroups[fieldKey] = [];
@@ -205,6 +224,7 @@ export async function POST(request) {
         // Build final query with filters
         let finalQuery = query;
         if (filters.length > 0) {
+          console.log('🔧 Applied filters:', JSON.stringify(filters, null, 2));
           finalQuery = {
             bool: {
               must: [query],
@@ -216,6 +236,7 @@ export async function POST(request) {
         // Build aggregations for facets
         let aggregations = {};
         if (params.facets && Array.isArray(params.facets)) {
+          console.log('📊 Building facets for:', params.facets);
           for (const facet of params.facets) {
             const aggName = facet.replace(/\./g, '_');
             let fieldName;
@@ -265,10 +286,12 @@ export async function POST(request) {
           searchBody.aggs = aggregations;
         }
         
+        console.log('🚀 Final search body:', JSON.stringify(searchBody, null, 2));
         operations.push(searchBody);
       }
       
     } catch (e) {
+      console.log('⚠️ Parsing fallback for raw body format');
       if (!rawBody || rawBody.trim().length === 0) {
         rawBody = `{"index":"woocommerce_products_2025-08-28_23-38"}\n{"query":{"match_all":{}},"size":10}\n`;
       }
@@ -305,15 +328,20 @@ export async function POST(request) {
       });
     }
 
+    console.log('📨 Sending to Elasticsearch:', operations.length / 2, 'requests');
     const result = await client.msearch({
       body: operations
     });
+
+    console.log('✅ Elasticsearch response received, processing...');
 
     // Transform Elasticsearch response to Algolia-compatible format
     const transformedResponse = {
       results: result.responses.map((response, index) => {
         const params = requestParams[Math.floor(index / 2)] || {}; // Each request generates 2 operations
+        
         if (response.error) {
+          console.log('❌ Elasticsearch error:', response.error);
           return {
             error: response.error,
             hits: [],
@@ -328,6 +356,8 @@ export async function POST(request) {
         const total = response.hits?.total?.value || response.hits?.total || 0;
         const hitsPerPage = operations[1]?.size || 20;
         const page = Math.floor((operations[1]?.from || 0) / hitsPerPage);
+
+        console.log(`📊 Request ${Math.floor(index / 2) + 1}: ${total} hits, ${hits.length} returned`);
 
         return {
           hits: hits.map(hit => ({
@@ -360,7 +390,7 @@ export async function POST(request) {
             }
 
             // Manually build facets from document data if aggregations are empty
-            const searchRequest = operations[1];
+            const searchRequest = operations[index * 2 + 1]; // Get corresponding search body
             if (searchRequest && searchRequest.aggs) {
               
               // Handle category facets
@@ -383,6 +413,7 @@ export async function POST(request) {
                 });
                 
                 facets['productCategories.nodes.name'] = categoryFacets;
+                console.log('🏷️ Built category facets from hits:', categoryFacets);
               }
 
               // Handle attribute facets (color, material, position, technique)
@@ -394,7 +425,7 @@ export async function POST(request) {
                 const isEmpty = !aggregation || (aggregation.buckets && aggregation.buckets.length === 0);
                 
                 if (facetRequested && isEmpty) {
-                  const attributeFacets = {};
+                  const attributeFacetData = {};
                   const attributeName = facetKey.replace('attributes_', '');
                   
                   hits.forEach(hit => {
@@ -405,12 +436,12 @@ export async function POST(request) {
                     const values = Array.isArray(attributeValues) ? attributeValues : [attributeValues];
                     values.forEach(value => {
                       if (value) {
-                        attributeFacets[value] = (attributeFacets[value] || 0) + 1;
+                        attributeFacetData[value] = (attributeFacetData[value] || 0) + 1;
                       }
                     });
                   });
                   
-                  facets[facetKey.replace('_', '.')] = attributeFacets;
+                  facets[facetKey.replace('_', '.')] = attributeFacetData;
                 }
               });
             }
@@ -424,53 +455,39 @@ export async function POST(request) {
       })
     };
 
-    return new Response(JSON.stringify(transformedResponse), {
-      status: 200,
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, x-elastic-client-meta'
-      }
-    });
+    console.log('✨ Sending transformed response');
+    res.json(transformedResponse);
 
   } catch (error) {
+    console.error('❌ Search error:', error);
     
     if (error.meta?.body?.error) {
-      return new Response(JSON.stringify({
+      return res.status(error.statusCode || 500).json({
         error: error.meta.body.error.type,
         message: error.meta.body.error.reason,
         status: error.statusCode
-      }), {
-        status: error.statusCode || 500,
-        headers: { 
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
       });
     }
 
-    return new Response(JSON.stringify({
+    res.status(500).json({
       error: 'Search failed',
       message: error.message,
       details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    }), {
-      status: 500,
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
     });
   }
-}
+});
 
-export async function OPTIONS() {
-  return new Response(null, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, x-elastic-client-meta'
-    },
-    status: 200
-  });
-}
+// Handle preflight requests
+app.options('/api/search-kit/_msearch', (req, res) => {
+  res.status(200).end();
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`🚀 Standalone SearchKit server running on http://localhost:${PORT}`);
+  console.log(`📍 Search endpoint: http://localhost:${PORT}/api/search-kit/_msearch`);
+  console.log(`💡 Health check: http://localhost:${PORT}/health`);
+  console.log(`🔌 Elasticsearch: ${process.env.ELASTICSEARCH_URL}`);
+});
+
+module.exports = app;

@@ -33,21 +33,21 @@ const QuantityDropdown = ({
     const currentPrice = getPriceForQuantity(qty);
     const basePrice = getPriceForQuantity(50); // Compare to smallest quantity
     
-    // More robust checking
-    if (!currentPrice || !basePrice || 
-        !currentPrice.finalProductPricePerUnit || 
-        !basePrice.finalProductPricePerUnit ||
-        basePrice.finalProductPricePerUnit <= 0) {
+    // More robust checking - support both old and new data structure
+    const currentPriceValue = currentPrice?.totalPrice || currentPrice?.finalProductPricePerUnit;
+    const basePriceValue = basePrice?.totalPrice || basePrice?.finalProductPricePerUnit;
+    
+    if (!currentPrice || !basePrice || !currentPriceValue || !basePriceValue || basePriceValue <= 0) {
       return null;
     }
     
-    const currentPriceValue = parseFloat(currentPrice.finalProductPricePerUnit);
-    const basePriceValue = parseFloat(basePrice.finalProductPricePerUnit);
+    const currentPriceFloat = parseFloat(currentPriceValue);
+    const basePriceFloat = parseFloat(basePriceValue);
     
     // Only show discount if current price is actually lower
-    if (currentPriceValue >= basePriceValue) return null;
+    if (currentPriceFloat >= basePriceFloat) return null;
     
-    const discount = ((basePriceValue - currentPriceValue) / basePriceValue) * 100;
+    const discount = ((basePriceFloat - currentPriceFloat) / basePriceFloat) * 100;
     return discount > 0.1 ? discount : null; // Only show if discount is meaningful (>0.1%)
   };
 
@@ -161,7 +161,7 @@ const QuantityDropdown = ({
                   
                   {/* Price Column */}
                   <div className="flex items-center text-gray-600">
-                    {priceData ? `€${priceData.finalProductPricePerUnit?.toFixed(2) || '0.00'}` : '—'}
+                    {priceData ? `€${(priceData.totalPrice || priceData.finalProductPricePerUnit || 0).toFixed(2)}` : '—'}
                   </div>
                   
                   {/* Discount Column */}
@@ -177,7 +177,7 @@ const QuantityDropdown = ({
                   
                   {/* Total Column */}
                   <div className="flex items-center font-semibold text-gray-800">
-                    {priceData ? `€${priceData.finalProductPrice?.toFixed(0) || '0'}` : '—'}
+                    {priceData ? `€${((priceData.totalPrice || priceData.finalProductPricePerUnit || 0) * qty).toFixed(0)}` : '—'}
                   </div>
                 </div>
               );
