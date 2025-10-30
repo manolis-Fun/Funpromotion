@@ -99,11 +99,11 @@ const normalizeVariation = (v) => {
 
 export default function ProductDetails({
   product,
-  priceMarkups,
-  priceMultipliers,
+  priceMarkups: initialPriceMarkups = null,
+  priceMultipliers: initialPriceMultipliers = null,
   quantityDefaults,
-  shippingCosts,
-  shippingDays,
+  shippingCosts: initialShippingCosts = null,
+  shippingDays: initialShippingDays = null,
 }) {
   const mainImage = product.images?.[0] || "/placeholder.jpg";
   const galleryImages = product.galleryImages?.length
@@ -121,6 +121,14 @@ export default function ProductDetails({
   const [isShippingCostPanelOpen, setIsShippingCostPanelOpen] = useState(false);
   const [isPriceFluctuationModalOpen, setIsPriceFluctuationModalOpen] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+
+  // Dynamic data state (lazy loaded)
+  const [priceMarkups, setPriceMarkups] = useState(initialPriceMarkups);
+  const [priceMultipliers, setPriceMultipliers] = useState(initialPriceMultipliers);
+  const [shippingCosts, setShippingCosts] = useState(initialShippingCosts);
+  const [shippingDays, setShippingDays] = useState(initialShippingDays);
+  const [stockQuantity, setStockQuantity] = useState(product.stockQuantity);
+  const [isDynamicDataLoading, setIsDynamicDataLoading] = useState(true);
 
   // Pricing state
   const [currentPricing, setCurrentPricing] = useState(null);
@@ -238,6 +246,52 @@ export default function ProductDetails({
     }
   };
 
+  // Lazy load dynamic data after page is fully loaded
+  useEffect(() => {
+    // Wait for page to fully load
+    if (typeof window === 'undefined') return;
+
+    const loadDynamicData = async () => {
+      try {
+        setIsDynamicDataLoading(true);
+
+        const response = await fetch(
+          `/api/product-dynamic-data?productId=${product.id}`,
+          {
+            cache: 'no-store',
+            headers: {
+              'Cache-Control': 'no-cache',
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch dynamic data');
+        }
+
+        const data = await response.json();
+
+        // Update dynamic data
+        if (data.priceMarkups) setPriceMarkups(data.priceMarkups);
+        if (data.priceMultipliers) setPriceMultipliers(data.priceMultipliers);
+        if (data.shippingCosts) setShippingCosts(data.shippingCosts);
+        if (data.shippingDays) setShippingDays(data.shippingDays);
+        if (data.stockQuantity !== undefined) setStockQuantity(data.stockQuantity);
+      } catch (error) {
+        console.error('Error loading dynamic data:', error);
+      } finally {
+        setIsDynamicDataLoading(false);
+      }
+    };
+
+    // Use requestIdleCallback for better performance, fallback to setTimeout
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(() => loadDynamicData());
+    } else {
+      setTimeout(loadDynamicData, 100);
+    }
+  }, [product.id]);
+
   // Initial setup
   useEffect(() => {
     if (!variations?.length) return;
@@ -342,7 +396,10 @@ export default function ProductDetails({
     !!technique &&
     (positions.length <= 1 || !!selectedPosition) &&
     (sizes.length <= 1 || !!selectedSize) &&
-    (extras.length <= 1 || !!selectedExtra);
+    (extras.length <= 1 || !!selectedExtra) &&
+    !isDynamicDataLoading &&
+    priceMarkups &&
+    priceMultipliers;
 
   // Calculate pricing when selections change
   useEffect(() => {
@@ -356,6 +413,11 @@ export default function ProductDetails({
     selectedSize,
     selectedExtra,
     selectedColor,
+    isDynamicDataLoading,
+    priceMarkups,
+    priceMultipliers,
+    shippingCosts,
+    shippingDays,
   ]);
 
   // Handlers for selection changes
@@ -495,7 +557,13 @@ export default function ProductDetails({
                 product code: <span className="text-gray-600">{product.productCode}</span>
               </p>
               <div className=" text-gray-500 font-semibold">
-                <span className="text-orange-500 font-medium">{product.stockQuantity}</span> In Stock
+                {isDynamicDataLoading ? (
+                  <span className="animate-pulse">Loading stock...</span>
+                ) : (
+                  <>
+                    <span className="text-orange-500 font-medium">{stockQuantity}</span> In Stock
+                  </>
+                )}
               </div>
             </div>
             <div>
@@ -781,7 +849,15 @@ export default function ProductDetails({
 
                 <div className="flex flex-col lg:flex-row items-center gap-6 w-full">
                   {/* Pricing Display */}
-                  {currentPricing && (
+                  {isDynamicDataLoading ? (
+                    <div className="w-full lg:w-[40%] p-4 bg-white rounded-lg border border-gray-200">
+                      <div className="animate-pulse space-y-4">
+                        <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                        <div className="h-6 bg-gray-200 rounded w-2/3"></div>
+                        <div className="h-10 bg-gray-200 rounded"></div>
+                      </div>
+                    </div>
+                  ) : currentPricing ? (
                     <div className="w-full lg:w-[40%] p-4 bg-white rounded-lg border border-gray-200  ">
                       <div className="flex items-center gap-2 mb-4">
                         <img src="https://p2p2k2n4.delivery.rocketcdn.me/wp-content/uploads/2023/10/price_per-icon.png" />
@@ -805,10 +881,23 @@ export default function ProductDetails({
                         Price fluctuation
                       </button>
                     </div>
-                  )}
+                  ) : null}
 
                   {/* Shipping Information */}
-                  {shippingOptions && currentShipping && (
+                  {isDynamicDataLoading ? (
+                    <div className="w-full lg:w-[60%] grid grid-cols-2 gap-x-8 bg-white border border-gray-200 rounded-lg p-4">
+                      <div className="animate-pulse space-y-3">
+                        <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                      </div>
+                      <div className="animate-pulse space-y-3">
+                        <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                      </div>
+                    </div>
+                  ) : shippingOptions && currentShipping ? (
                     <div className="w-full lg:w-[60%] grid grid-cols-2 gap-x-8 bg-white border border-gray-200 rounded-lg p-4 ">
                       <div className="group transition-all flex flex-col items-center">
                         <div className="flex justify-center mb-3">
@@ -836,7 +925,7 @@ export default function ProductDetails({
                         <p className="text-center text-base font-bold text-purple-600">Contact us</p>
                       </div>
                     </div>
-                  )}
+                  ) : null}
 
                 </div>
 

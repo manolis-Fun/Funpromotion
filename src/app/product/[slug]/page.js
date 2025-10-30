@@ -2,11 +2,6 @@ import {
   graphqlClient,
   getProductBySlugQuery,
   fetchAllProducts,
-  getPriceMarkups,
-  getPriceMultipliers,
-  getQuantityDefaults,
-  getShippingCosts,
-  getShippingDays,
 } from '@/lib/graphql';
 import { notFound } from 'next/navigation';
 import ProductDetails from '@/components/product-detail';
@@ -14,54 +9,6 @@ import NewsletterBanner from '@/components/NewsletterBanner';
 
 export const dynamic = 'force-static';
 export const revalidate = 3600;
-
-const DEV = process.env.NODE_ENV !== 'production';
-
-const GET_PRODUCTS_BY_CATEGORY = `
-  query GetProductsByCategory($category: [String]!) {
-    products(first: 1000, where: { categoryIn: $category }) {
-      nodes {
-        id
-        slug
-        name
-        title
-        v1W1
-        singleProductFields {
-          priceMain
-          priceMainSale
-          v1W1
-          brand
-          manipulation
-          incomingStock
-        }
-        image {
-          sourceUrl
-          altText
-        }
-        productCategories(first: 1000) {
-          nodes { name slug }
-        }
-        shortDescription
-        ... on SimpleProduct { price stockQuantity }
-        ... on VariableProduct { price stockQuantity }
-        ... on ExternalProduct { price }
-        ... on GroupProduct { price }
-      }
-    }
-  }
-`;
-
-/**
- * Small helper to reduce a flat array [{key,value}] to a map.
- * Safely returns null if input is falsy or empty.
- */
-function toMap(flatList) {
-  if (!Array.isArray(flatList) || flatList.length === 0) return null;
-  return flatList.reduce((acc, item) => {
-    if (item && typeof item.key === 'string') acc[item.key] = item.value;
-    return acc;
-  }, {});
-}
 
 /**
  * Request with graceful fallback to mock data when available.
@@ -118,53 +65,18 @@ export default async function ProductPage({ params }) {
   const product = await getProduct(params.slug);
   if (!product) notFound();
 
-  // Fetch all pricing config in parallel
-  const [
-    markupsRes,
-    multipliersRes,
-    qtyDefaultsRes,
-    shipCostsRes,
-    shipDaysRes,
-  ] = await Promise.allSettled([
-    requestOrMock(getPriceMarkups),
-    requestOrMock(getPriceMultipliers),
-    requestOrMock(getQuantityDefaults),
-    requestOrMock(getShippingCosts),
-    requestOrMock(getShippingDays),
-  ]);
-
-  const priceMarkups = toMap(markupsRes.value?.markupsFlat);
-  const priceMultipliers = toMap(multipliersRes.value?.multipliersFlat);
-  const quantityDefaults = toMap(qtyDefaultsRes.value?.quantityDefaultsFlat);
-  const shippingCosts = toMap(shipCostsRes.value?.shippingCostsFlat);
-  const shippingDays = toMap(shipDaysRes.value?.shippingDaysFlat);
-
-  // Suppress GraphQL warnings in development
-  // if (DEV) {
-  //   console.log('priceMarkups:', priceMarkups);
-  //   console.log('priceMultipliers:', priceMultipliers);
-  //   console.log('quantityDefaults:', quantityDefaults);
-  //   console.log('shippingCosts:', shippingCosts);
-  //   console.log('shippingDays:', shippingDays);
-  // }
-
-  // Similar products by category
-  const categorySlugs = product?.productCategories?.nodes?.map(c => c.slug) || [];
-  let similarProducts = [];
-  if (categorySlugs.length) {
-    const byCat = await requestOrMock(GET_PRODUCTS_BY_CATEGORY, { category: categorySlugs });
-    similarProducts = (byCat?.products?.nodes || []).filter(p => p.slug !== product.slug);
-  }
-
+  // Dynamic data (pricing, shipping costs, shipping days, stock) will be lazy loaded
+  // on the client side after page load to avoid blocking static generation
   return (
     <main>
       <ProductDetails
         product={product}
-        priceMarkups={priceMarkups}
-        priceMultipliers={priceMultipliers}
-        quantityDefaults={quantityDefaults}
-        shippingCosts={shippingCosts}
-        shippingDays={shippingDays}
+        // These will be loaded dynamically on the client
+        priceMarkups={null}
+        priceMultipliers={null}
+        quantityDefaults={null}
+        shippingCosts={null}
+        shippingDays={null}
       />
       <NewsletterBanner />
     </main>

@@ -311,7 +311,7 @@ export async function POST(request) {
 
     // Transform Elasticsearch response to Algolia-compatible format
     const transformedResponse = {
-      results: result.responses.map((response, index) => {
+      results: (Array.isArray(result.responses) ? result.responses : []).map((response, index) => {
         const params = requestParams[Math.floor(index / 2)] || {}; // Each request generates 2 operations
         if (response.error) {
           return {
@@ -324,18 +324,18 @@ export async function POST(request) {
           };
         }
 
-        const hits = response.hits?.hits || [];
+        const hits = Array.isArray(response.hits?.hits) ? response.hits.hits : [];
         const total = response.hits?.total?.value || response.hits?.total || 0;
         const hitsPerPage = operations[1]?.size || 20;
         const page = Math.floor((operations[1]?.from || 0) / hitsPerPage);
 
         return {
-          hits: hits.map(hit => ({
+          hits: Array.isArray(hits) ? hits.map(hit => ({
             ...hit._source,
             objectID: hit._id,
             _highlightResult: {},
             _snippetResult: {}
-          })),
+          })) : [],
           nbHits: total,
           page: page,
           nbPages: Math.ceil(total / hitsPerPage),
