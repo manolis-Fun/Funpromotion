@@ -45,7 +45,7 @@ NODE_ENV=development
 
 ### Main Search Endpoint
 ```
-POST http://localhost:3001/api/search-kit/_msearch
+POST http://localhost:3001/api/search-kit/msearch
 ```
 
 This endpoint accepts the exact same requests as the original SearchKit implementation and returns identical responses.
@@ -94,10 +94,10 @@ This standalone server replicates **ALL** SearchKit functionality:
 
 ```bash
 # Basic search (all products)
-curl -X POST http://localhost:3001/api/search-kit/_msearch \
+curl -X POST http://localhost:3001/api/search-kit/msearch \
   -H "Content-Type: application/json" \
   -d '[{
-    "indexName": "woocommerce_products_2025-08-28_23-38",
+    "indexName": "woocommerce_products_all",
     "params": {
       "facets": ["productCategories.nodes.name"],
       "hitsPerPage": 20,
@@ -107,10 +107,10 @@ curl -X POST http://localhost:3001/api/search-kit/_msearch \
   }]'
 
 # Category filtered search
-curl -X POST http://localhost:3001/api/search-kit/_msearch \
+curl -X POST http://localhost:3001/api/search-kit/msearch \
   -H "Content-Type: application/json" \
   -d '[{
-    "indexName": "woocommerce_products_2025-08-28_23-38", 
+    "indexName": "woocommerce_products_all", 
     "params": {
       "facets": ["productCategories.nodes.name"],
       "facetFilters": ["productCategories.nodes.name:Παιδικά Δώρα"],
@@ -127,7 +127,7 @@ To use this standalone server with your frontend, simply update the SearchKit cl
 
 ```javascript
 const searchClient = Client({
-  url: 'http://localhost:3001/api/search-kit/_msearch',  // ← Change this
+  url: 'http://localhost:3001/api/search-kit/msearch',  // ← Change this
   headers: {
     'Content-Type': 'application/json'
   }

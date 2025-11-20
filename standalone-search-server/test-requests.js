@@ -2,14 +2,14 @@ const axios = require('axios');
 
 // Test configuration
 const SERVER_URL = 'http://localhost:3001';
-const SEARCH_ENDPOINT = `${SERVER_URL}/api/search-kit/_msearch`;
+const SEARCH_ENDPOINT = `${SERVER_URL}/api/search-kit/msearch`;
 
 // Test cases that match your current usage
 const testCases = [
   {
     name: 'Basic search - All products with facets',
     payload: [{
-      indexName: 'woocommerce_products_2025-08-28_23-38',
+      indexName: 'woocommerce_products_all',
       params: {
         facets: [
           'productCategories.nodes.name',
@@ -28,7 +28,7 @@ const testCases = [
   {
     name: 'Category filter - Παιδικά Δώρα',
     payload: [{
-      indexName: 'woocommerce_products_2025-08-28_23-38',
+      indexName: 'woocommerce_products_all',
       params: {
         facets: [
           'productCategories.nodes.name',
@@ -48,7 +48,7 @@ const testCases = [
   {
     name: 'Category filter - ST',
     payload: [{
-      indexName: 'woocommerce_products_2025-08-28_23-38',
+      indexName: 'woocommerce_products_all',
       params: {
         facets: [
           'productCategories.nodes.name',
@@ -68,7 +68,7 @@ const testCases = [
   {
     name: 'Price range filter',
     payload: [{
-      indexName: 'woocommerce_products_2025-08-28_23-38',
+      indexName: 'woocommerce_products_all',
       params: {
         facets: ['productCategories.nodes.name', 'price'],
         numericFilters: ['price>=10', 'price<=100'],
@@ -81,7 +81,7 @@ const testCases = [
   {
     name: 'Text search query',
     payload: [{
-      indexName: 'woocommerce_products_2025-08-28_23-38',
+      indexName: 'woocommerce_products_all',
       params: {
         facets: ['productCategories.nodes.name'],
         hitsPerPage: 20,
@@ -94,7 +94,7 @@ const testCases = [
 
 async function runTests() {
   console.log('🧪 Running SearchKit Server Tests\n');
-  
+
   // Check if server is running
   try {
     const healthCheck = await axios.get(`${SERVER_URL}/health`);
@@ -110,23 +110,23 @@ async function runTests() {
   for (let i = 0; i < testCases.length; i++) {
     const testCase = testCases[i];
     console.log(`🔍 Test ${i + 1}: ${testCase.name}`);
-    
+
     try {
       const startTime = Date.now();
       const response = await axios.post(SEARCH_ENDPOINT, testCase.payload);
       const duration = Date.now() - startTime;
-      
+
       const result = response.data.results[0];
-      
+
       console.log(`✅ Success (${duration}ms)`);
       console.log(`   📊 Results: ${result.nbHits} hits, ${result.hits.length} returned`);
-      
+
       if (result.facets && result.facets['productCategories.nodes.name']) {
         const categories = Object.keys(result.facets['productCategories.nodes.name']);
         console.log(`   🏷️  Categories: ${categories.length} found`);
         console.log(`       ${categories.slice(0, 3).join(', ')}${categories.length > 3 ? '...' : ''}`);
       }
-      
+
       if (result.hits.length > 0) {
         const sampleHit = result.hits[0];
         console.log(`   📝 Sample product: ${sampleHit.name || sampleHit.title || 'Unnamed'}`);
@@ -134,9 +134,9 @@ async function runTests() {
           console.log(`       Category: ${sampleHit.productCategories.nodes[0].name}`);
         }
       }
-      
+
       console.log('');
-      
+
     } catch (error) {
       console.log(`❌ Failed`);
       if (error.response?.data) {
@@ -147,7 +147,7 @@ async function runTests() {
       console.log('');
     }
   }
-  
+
   console.log('🎉 All tests completed!');
 }
 

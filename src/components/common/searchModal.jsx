@@ -15,7 +15,7 @@ import { COLOR_NAME_TO_VALUE } from "@/constants/colors";
 import HistogramPriceSlider from "@/components/product-category/histogram-price-slider";
 
 const searchClient = Client({
-  url: "https://react-backend.woth.gr/api/search-kit/_msearch",
+  url: "https://react-backend.woth.gr/api/search-kit/msearch",
   headers: {
     "Content-Type": "application/json",
   },
@@ -24,7 +24,7 @@ const searchClient = Client({
 // Context for managing price range
 const PriceRangeContext = React.createContext({
   priceRange: null,
-  setPriceRange: () => {}
+  setPriceRange: () => { }
 });
 
 const usePriceRange = () => React.useContext(PriceRangeContext);
@@ -161,308 +161,303 @@ function SearchBoxConnector({ query }) {
 
 // Categories Filter Component - Now accepts onClose prop
 function CategoriesFilter({ onClose }) {
-    const { items, refine } = useRefinementList({
-        attribute: 'productCategories.nodes.name'
-    });
+  const { items, refine } = useRefinementList({
+    attribute: 'productCategories.nodes.name'
+  });
 
-    if (items.length === 0) {
-        return null;
-    }
+  if (items.length === 0) {
+    return null;
+  }
 
-    return (
-        <section>
-            <h2 className="font-semibold mb-4 text-gray-900 uppercase tracking-wider text-sm">CATEGORIES</h2>
-            <ul className="grid gap-2">
-                {items.map((item, index) => {
-                    return (
-                        <li key={String(item.value)} className="flex justify-between items-center py-1">
-                            <button
-                                onClick={() => refine(item.value)}
-                                className={`text-left transition-colors block flex-1 text-sm py-1 px-2 rounded ${
-                                    item.isRefined
-                                        ? 'bg-orange-50 text-orange-800 font-medium'
-                                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
-                                }`}
-                            >
-                                {String(item.label || '')}
-                            </button>
-                            <span className={`text-xs ml-2 px-2 py-1 rounded-full ${
-                                item.isRefined
-                                    ? 'bg-orange-100 text-orange-700'
-                                    : 'bg-gray-100 text-gray-500'
-                            }`}>
-                                {String(item.count || 0)}
-                            </span>
-                        </li>
-                    );
-                })}
-            </ul>
-        </section>
-    );
+  return (
+    <section>
+      <h2 className="font-semibold mb-4 text-gray-900 uppercase tracking-wider text-sm">CATEGORIES</h2>
+      <ul className="grid gap-2">
+        {items.map((item, index) => {
+          return (
+            <li key={String(item.value)} className="flex justify-between items-center py-1">
+              <button
+                onClick={() => refine(item.value)}
+                className={`text-left transition-colors block flex-1 text-sm py-1 px-2 rounded ${item.isRefined
+                    ? 'bg-orange-50 text-orange-800 font-medium'
+                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                  }`}
+              >
+                {String(item.label || '')}
+              </button>
+              <span className={`text-xs ml-2 px-2 py-1 rounded-full ${item.isRefined
+                  ? 'bg-orange-100 text-orange-700'
+                  : 'bg-gray-100 text-gray-500'
+                }`}>
+                {String(item.count || 0)}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
 }
 
 // Color Filter Component (copied from original SearchKitSidebar)
 function ColorFilter() {
-    const refinementList = useRefinementList({
-        attribute: 'attributes.color'
-    });
+  const refinementList = useRefinementList({
+    attribute: 'attributes.color'
+  });
 
-    const items = refinementList?.items || [];
-    const refine = refinementList?.refine || (() => {});
+  const items = refinementList?.items || [];
+  const refine = refinementList?.refine || (() => { });
 
-    const colorsToShow = items;
-    if (colorsToShow.length === 0) {
-        return null;
-    }
+  const colorsToShow = items;
+  if (colorsToShow.length === 0) {
+    return null;
+  }
 
-    return (
-        <section>
-            <h2 className="font-semibold mb-4 text-gray-900 uppercase tracking-wider text-sm">COLOR</h2>
-            <ul className="grid grid-cols-6 gap-3">
-                {colorsToShow.map(item => {
-                    const colorValue = COLOR_NAME_TO_VALUE[item.label] || "#FFFFFF";
-                    return (
-                        <li key={item.value}>
-                            <button
-                                onClick={() => refine(item.value)}
-                                title={item.label}
-                                className={clsx(
-                                    "w-10 h-10 rounded-lg border flex items-center justify-center shadow transition",
-                                    item.isRefined
-                                        ? "border-orange-500"
-                                        : "border-gray-200"
-                                )}
-                                style={{ background: colorValue }}
-                            >
-                                {item.isRefined && <Tick />}
-                            </button>
-                        </li>
-                    );
-                })}
-            </ul>
-        </section>
-    );
+  return (
+    <section>
+      <h2 className="font-semibold mb-4 text-gray-900 uppercase tracking-wider text-sm">COLOR</h2>
+      <ul className="grid grid-cols-6 gap-3">
+        {colorsToShow.map(item => {
+          const colorValue = COLOR_NAME_TO_VALUE[item.label] || "#FFFFFF";
+          return (
+            <li key={item.value}>
+              <button
+                onClick={() => refine(item.value)}
+                title={item.label}
+                className={clsx(
+                  "w-10 h-10 rounded-lg border flex items-center justify-center shadow transition",
+                  item.isRefined
+                    ? "border-orange-500"
+                    : "border-gray-200"
+                )}
+                style={{ background: colorValue }}
+              >
+                {item.isRefined && <Tick />}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
 }
 
 // Price Range Filter with Histogram
 function PriceRangeFilter() {
-    const { results } = useInstantSearch();
-    const { priceRange, setPriceRange } = usePriceRange();
+  const { results } = useInstantSearch();
+  const { priceRange, setPriceRange } = usePriceRange();
 
-    // Extract products from results
-    const products = useMemo(() => {
-        if (!results || !results.hits || !Array.isArray(results.hits)) {
-            return [];
+  // Extract products from results
+  const products = useMemo(() => {
+    if (!results || !results.hits || !Array.isArray(results.hits)) {
+      return [];
+    }
+    return results.hits.map(hit => hit._source || hit);
+  }, [results]);
+
+  // Calculate min and max prices from products
+  const priceData = useMemo(() => {
+    if (!products.length) return { minPrice: 0, maxValue: 1000, prices: [] };
+
+    const prices = products.map(p => {
+      // Helper function to extract price value
+      const extractPriceValue = (priceField) => {
+        if (!priceField) return null;
+        if (typeof priceField === 'object' && priceField.value !== undefined) {
+          return priceField.value;
         }
-        return results.hits.map(hit => hit._source || hit);
-    }, [results]);
+        return priceField;
+      };
 
-    // Calculate min and max prices from products
-    const priceData = useMemo(() => {
-        if (!products.length) return { minPrice: 0, maxValue: 1000, prices: [] };
+      // Try multiple price fields
+      const price = extractPriceValue(p?.discount_price) ||
+        extractPriceValue(p?.price) ||
+        extractPriceValue(p?.customerPrice) ||
+        extractPriceValue(p?.singleProductFields?.priceMainSale) ||
+        extractPriceValue(p?.singleProductFields?.priceMain) ||
+        extractPriceValue(p?.regularPrice) ||
+        extractPriceValue(p?.salePrice);
 
-        const prices = products.map(p => {
-            // Helper function to extract price value
-            const extractPriceValue = (priceField) => {
-                if (!priceField) return null;
-                if (typeof priceField === 'object' && priceField.value !== undefined) {
-                    return priceField.value;
-                }
-                return priceField;
-            };
+      if (typeof price === 'string') {
+        const numPrice = parseFloat(price.replace(/[^0-9.-]+/g, ''));
+        return isNaN(numPrice) ? null : numPrice;
+      }
+      return typeof price === 'number' ? price : null;
+    }).filter(p => p !== null && p >= 0);
 
-            // Try multiple price fields
-            const price = extractPriceValue(p?.discount_price) ||
-                         extractPriceValue(p?.price) ||
-                         extractPriceValue(p?.customerPrice) ||
-                         extractPriceValue(p?.singleProductFields?.priceMainSale) ||
-                         extractPriceValue(p?.singleProductFields?.priceMain) ||
-                         extractPriceValue(p?.regularPrice) ||
-                         extractPriceValue(p?.salePrice);
+    if (!prices.length) return { minPrice: 0, maxValue: 1000, prices: [] };
 
-            if (typeof price === 'string') {
-                const numPrice = parseFloat(price.replace(/[^0-9.-]+/g, ''));
-                return isNaN(numPrice) ? null : numPrice;
-            }
-            return typeof price === 'number' ? price : null;
-        }).filter(p => p !== null && p >= 0);
+    return {
+      minPrice: Math.floor(Math.min(...prices)),
+      maxValue: Math.ceil(Math.max(...prices)),
+      prices
+    };
+  }, [products]);
 
-        if (!prices.length) return { minPrice: 0, maxValue: 1000, prices: [] };
-
-        return {
-            minPrice: Math.floor(Math.min(...prices)),
-            maxValue: Math.ceil(Math.max(...prices)),
-            prices
-        };
-    }, [products]);
-
-    // Handle range change
-    const handleRangeChange = useCallback((newRange) => {
-        if (!Array.isArray(newRange) || newRange.length !== 2) {
-            return;
-        }
-
-        // Check if the range is at full extent (should clear filter)
-        if (newRange[0] <= priceData.minPrice && newRange[1] >= priceData.maxValue) {
-            setPriceRange(null); // Clear the filter
-        } else {
-            setPriceRange(newRange);
-        }
-    }, [setPriceRange, priceData.minPrice, priceData.maxValue]);
-
-    // Get current range
-    const currentRange = priceRange || [priceData.minPrice, priceData.maxValue];
-
-    // Don't render if no valid price data
-    if (priceData.prices.length === 0) {
-        return null;
+  // Handle range change
+  const handleRangeChange = useCallback((newRange) => {
+    if (!Array.isArray(newRange) || newRange.length !== 2) {
+      return;
     }
 
-    return (
-        <section>
-            <h2 className="text-base font-medium mb-4">Price Range</h2>
-            <HistogramPriceSlider
-                products={products}
-                minValue={priceData.minPrice}
-                maxValue={priceData.maxValue}
-                initialRange={currentRange}
-                onRangeChange={handleRangeChange}
-                currency="€"
-                bucketCount={20}
-                barHeight={60}
-                showLabels={true}
-                showInputs={true}
-            />
-        </section>
-    );
+    // Check if the range is at full extent (should clear filter)
+    if (newRange[0] <= priceData.minPrice && newRange[1] >= priceData.maxValue) {
+      setPriceRange(null); // Clear the filter
+    } else {
+      setPriceRange(newRange);
+    }
+  }, [setPriceRange, priceData.minPrice, priceData.maxValue]);
+
+  // Get current range
+  const currentRange = priceRange || [priceData.minPrice, priceData.maxValue];
+
+  // Don't render if no valid price data
+  if (priceData.prices.length === 0) {
+    return null;
+  }
+
+  return (
+    <section>
+      <h2 className="text-base font-medium mb-4">Price Range</h2>
+      <HistogramPriceSlider
+        products={products}
+        minValue={priceData.minPrice}
+        maxValue={priceData.maxValue}
+        initialRange={currentRange}
+        onRangeChange={handleRangeChange}
+        currency="€"
+        bucketCount={20}
+        barHeight={60}
+        showLabels={true}
+        showInputs={true}
+      />
+    </section>
+  );
 }
 
 // Custom Printing Technique Component
 const PrintingTechniquesFilter = () => {
-    const { items, refine } = useRefinementList({
-        attribute: "attributes.technique",
-        limit: 10
-    });
+  const { items, refine } = useRefinementList({
+    attribute: "attributes.technique",
+    limit: 10
+  });
 
-    // Define technique icons and styling
-    const getTechniqueIcon = (technique) => {
-        switch(technique.toLowerCase()) {
-            case '1-color':
-            case '1 color':
-                return (
-                    <div className="w-5 h-5 rounded-full bg-purple-600"></div>
-                );
-            case '2-colors':
-            case '2 colors':
-                return (
-                    <div className="w-5 h-5 relative">
-                        <div className="w-3 h-5 rounded-l-full bg-purple-600 absolute left-0"></div>
-                        <div className="w-3 h-5 rounded-r-full bg-teal-500 absolute right-0"></div>
-                    </div>
-                );
-            case '3-colors':
-            case '3 colors':
-                return (
-                    <div className="w-5 h-5 relative">
-                        <div className="w-3 h-3 rounded-full bg-purple-600 absolute top-0 left-0.5"></div>
-                        <div className="w-3 h-3 rounded-full bg-orange-500 absolute top-1 right-0"></div>
-                        <div className="w-3 h-3 rounded-full bg-teal-500 absolute bottom-0 left-1"></div>
-                    </div>
-                );
-            case '4-colors':
-            case '4 colors':
-                return (
-                    <div className="w-5 h-5 relative">
-                        <div className="w-3 h-3 rounded-full bg-purple-600 absolute top-0 left-0"></div>
-                        <div className="w-3 h-3 rounded-full bg-orange-500 absolute top-0 right-0"></div>
-                        <div className="w-3 h-3 rounded-full bg-gray-700 absolute bottom-0 left-0"></div>
-                        <div className="w-3 h-3 rounded-full bg-teal-500 absolute bottom-0 right-0"></div>
-                    </div>
-                );
-            case 'full-color':
-            case 'full color':
-                return (
-                    <div className="w-5 h-5 rounded-full bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 to-purple-500"></div>
-                );
-            case 'lasers':
-            case 'laser':
-                return (
-                    <div className="w-5 h-5 flex items-center justify-center">
-                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2L13.09 8.26L22 9L13.09 9.74L12 16L10.91 9.74L2 9L10.91 8.26L12 2Z"/>
-                        </svg>
-                    </div>
-                );
-            default:
-                return (
-                    <div className="w-5 h-5 rounded-full bg-gray-400"></div>
-                );
-        }
-    };
-
-    const formatTechniqueName = (technique) => {
-        switch(technique.toLowerCase()) {
-            case '1-color':
-            case '1 color':
-                return '1 color';
-            case '2-colors':
-            case '2 colors':
-                return '2 colors';
-            case '3-colors':
-            case '3 colors':
-                return '3 colors';
-            case '4-colors':
-            case '4 colors':
-                return '4 colors';
-            case 'full-color':
-            case 'full color':
-                return 'Full color';
-            case 'lasers':
-            case 'laser':
-                return 'Lasers';
-            default:
-                return technique;
-        }
-    };
-
-    if (items.length === 0) {
-        return null;
+  // Define technique icons and styling
+  const getTechniqueIcon = (technique) => {
+    switch (technique.toLowerCase()) {
+      case '1-color':
+      case '1 color':
+        return (
+          <div className="w-5 h-5 rounded-full bg-purple-600"></div>
+        );
+      case '2-colors':
+      case '2 colors':
+        return (
+          <div className="w-5 h-5 relative">
+            <div className="w-3 h-5 rounded-l-full bg-purple-600 absolute left-0"></div>
+            <div className="w-3 h-5 rounded-r-full bg-teal-500 absolute right-0"></div>
+          </div>
+        );
+      case '3-colors':
+      case '3 colors':
+        return (
+          <div className="w-5 h-5 relative">
+            <div className="w-3 h-3 rounded-full bg-purple-600 absolute top-0 left-0.5"></div>
+            <div className="w-3 h-3 rounded-full bg-orange-500 absolute top-1 right-0"></div>
+            <div className="w-3 h-3 rounded-full bg-teal-500 absolute bottom-0 left-1"></div>
+          </div>
+        );
+      case '4-colors':
+      case '4 colors':
+        return (
+          <div className="w-5 h-5 relative">
+            <div className="w-3 h-3 rounded-full bg-purple-600 absolute top-0 left-0"></div>
+            <div className="w-3 h-3 rounded-full bg-orange-500 absolute top-0 right-0"></div>
+            <div className="w-3 h-3 rounded-full bg-gray-700 absolute bottom-0 left-0"></div>
+            <div className="w-3 h-3 rounded-full bg-teal-500 absolute bottom-0 right-0"></div>
+          </div>
+        );
+      case 'full-color':
+      case 'full color':
+        return (
+          <div className="w-5 h-5 rounded-full bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 to-purple-500"></div>
+        );
+      case 'lasers':
+      case 'laser':
+        return (
+          <div className="w-5 h-5 flex items-center justify-center">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L13.09 8.26L22 9L13.09 9.74L12 16L10.91 9.74L2 9L10.91 8.26L12 2Z" />
+            </svg>
+          </div>
+        );
+      default:
+        return (
+          <div className="w-5 h-5 rounded-full bg-gray-400"></div>
+        );
     }
+  };
 
-    return (
-        <section className="bg-white py-4 rounded-lg">
-            <h2 className="font-semibold mb-4 text-gray-900 uppercase tracking-wider text-sm">PRINTING</h2>
-            <div className="space-y-3">
-                {items.map((item) => (
-                    <div
-                        key={item.value}
-                        onClick={() => refine(item.value)}
-                        className={`flex items-center justify-between cursor-pointer py-2 px-1 rounded-lg transition-colors ${
-                            item.isRefined
-                                ? 'bg-orange-50'
-                                : 'hover:bg-gray-50'
-                        }`}
-                    >
-                        <div className="flex items-center gap-3">
-                            {getTechniqueIcon(item.value)}
-                            <span className={`text-sm ${
-                                item.isRefined ? 'text-gray-700 font-medium' : 'text-gray-600'
-                            }`}>
-                                {formatTechniqueName(item.value)}
-                            </span>
-                        </div>
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                            item.isRefined
-                                ? 'bg-orange-500 text-white font-medium'
-                                : 'bg-gray-100 text-gray-500'
-                        }`}>
-                            {item.count}
-                        </span>
-                    </div>
-                ))}
+  const formatTechniqueName = (technique) => {
+    switch (technique.toLowerCase()) {
+      case '1-color':
+      case '1 color':
+        return '1 color';
+      case '2-colors':
+      case '2 colors':
+        return '2 colors';
+      case '3-colors':
+      case '3 colors':
+        return '3 colors';
+      case '4-colors':
+      case '4 colors':
+        return '4 colors';
+      case 'full-color':
+      case 'full color':
+        return 'Full color';
+      case 'lasers':
+      case 'laser':
+        return 'Lasers';
+      default:
+        return technique;
+    }
+  };
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="bg-white py-4 rounded-lg">
+      <h2 className="font-semibold mb-4 text-gray-900 uppercase tracking-wider text-sm">PRINTING</h2>
+      <div className="space-y-3">
+        {items.map((item) => (
+          <div
+            key={item.value}
+            onClick={() => refine(item.value)}
+            className={`flex items-center justify-between cursor-pointer py-2 px-1 rounded-lg transition-colors ${item.isRefined
+                ? 'bg-orange-50'
+                : 'hover:bg-gray-50'
+              }`}
+          >
+            <div className="flex items-center gap-3">
+              {getTechniqueIcon(item.value)}
+              <span className={`text-sm ${item.isRefined ? 'text-gray-700 font-medium' : 'text-gray-600'
+                }`}>
+                {formatTechniqueName(item.value)}
+              </span>
             </div>
-        </section>
-    );
+            <span className={`text-xs px-2 py-1 rounded-full ${item.isRefined
+                ? 'bg-orange-500 text-white font-medium'
+                : 'bg-gray-100 text-gray-500'
+              }`}>
+              {item.count}
+            </span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 };
 
 // Simple Filter Sidebar with all filters
@@ -694,7 +689,7 @@ const SearchResultsGrid = React.memo(function SearchResultsGrid({ query, onClose
       </div>
     );
   }
-  
+
   if (!searchResults?.length && !loading) {
     try {
       return (
@@ -704,83 +699,83 @@ const SearchResultsGrid = React.memo(function SearchResultsGrid({ query, onClose
             <h3 className="font-semibold mb-4">Useful Pages</h3>
             <ul className="space-y-3">
               {websitePages.map((page, index) => (
-              <li key={index}>
-                <Link
-                  href={page.href}
-                  onClick={onClose}
-                  className="text-blue-600 hover:underline text-sm"
-                >
-                  {page.name} →
-                </Link>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-6">
-            <h4 className="font-medium mb-2">Your recent searches</h4>
-            <div className="flex flex-wrap gap-2">
-              {recentSearches.length > 0 ? (
-                recentSearches.map((search, index) => (
-                  <span
-                    key={index}
-                    className="px-2 py-1 bg-gray-100 rounded text-xs cursor-pointer hover:bg-gray-200 flex items-center gap-1"
-                    onClick={() => handleRecentSearchClick(search)}
+                <li key={index}>
+                  <Link
+                    href={page.href}
+                    onClick={onClose}
+                    className="text-blue-600 hover:underline text-sm"
                   >
-                    {search}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveRecentSearch(search);
-                      }}
-                      className="text-gray-500 hover:text-gray-700"
+                    {page.name} →
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-6">
+              <h4 className="font-medium mb-2">Your recent searches</h4>
+              <div className="flex flex-wrap gap-2">
+                {recentSearches.length > 0 ? (
+                  recentSearches.map((search, index) => (
+                    <span
+                      key={index}
+                      className="px-2 py-1 bg-gray-100 rounded text-xs cursor-pointer hover:bg-gray-200 flex items-center gap-1"
+                      onClick={() => handleRecentSearchClick(search)}
                     >
-                      ×
-                    </button>
-                  </span>
-                ))
-              ) : (
-                <span className="text-gray-400 text-xs">No recent searches</span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Right side - Illustration */}
-        <div className="w-full lg:w-2/3 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-32 lg:w-48 h-32 lg:h-48 mx-auto mb-4 flex items-center justify-center">
-              {/* Placeholder illustration similar to midocean.com */}
-              <div className="relative">
-                <div className="w-20 lg:w-32 h-20 lg:h-32 bg-blue-100 rounded-full flex items-center justify-center">
-                  <FiSearch className="w-10 lg:w-16 h-10 lg:h-16 text-blue-400" />
-                </div>
-                <div className="absolute -top-1 lg:-top-2 -right-1 lg:-right-2 w-4 lg:w-6 h-4 lg:h-6 bg-blue-200 rounded-full"></div>
-                <div className="absolute -bottom-1 lg:-bottom-2 -left-1 lg:-left-2 w-3 lg:w-4 h-3 lg:h-4 bg-teal-200 rounded-full"></div>
-                <div className="absolute top-4 lg:top-8 -left-2 lg:-left-4 w-2 lg:w-3 h-2 lg:h-3 bg-orange-200 rounded-full"></div>
+                      {search}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveRecentSearch(search);
+                        }}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-gray-400 text-xs">No recent searches</span>
+                )}
               </div>
             </div>
-            <p className="text-base lg:text-lg font-medium text-gray-900 mb-2">
-              Sorry, we could not find any results for "{String(query || '').trim()}"
-            </p>
-            <div className="text-sm text-gray-500 space-y-1">
-              <p>• Is the spelling of your search term correct?</p>
-              <p>
-                • Try a less specific search term. That might yield more
-                results.
+          </div>
+
+          {/* Right side - Illustration */}
+          <div className="w-full lg:w-2/3 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-32 lg:w-48 h-32 lg:h-48 mx-auto mb-4 flex items-center justify-center">
+                {/* Placeholder illustration similar to midocean.com */}
+                <div className="relative">
+                  <div className="w-20 lg:w-32 h-20 lg:h-32 bg-blue-100 rounded-full flex items-center justify-center">
+                    <FiSearch className="w-10 lg:w-16 h-10 lg:h-16 text-blue-400" />
+                  </div>
+                  <div className="absolute -top-1 lg:-top-2 -right-1 lg:-right-2 w-4 lg:w-6 h-4 lg:h-6 bg-blue-200 rounded-full"></div>
+                  <div className="absolute -bottom-1 lg:-bottom-2 -left-1 lg:-left-2 w-3 lg:w-4 h-3 lg:h-4 bg-teal-200 rounded-full"></div>
+                  <div className="absolute top-4 lg:top-8 -left-2 lg:-left-4 w-2 lg:w-3 h-2 lg:h-3 bg-orange-200 rounded-full"></div>
+                </div>
+              </div>
+              <p className="text-base lg:text-lg font-medium text-gray-900 mb-2">
+                Sorry, we could not find any results for "{String(query || '').trim()}"
               </p>
-              <p>
-                •{" "}
-                <Link
-                  href="/categories"
-                  onClick={onClose}
-                  className="text-blue-600 hover:underline"
-                >
-                  Back to previous search results
-                </Link>
-              </p>
+              <div className="text-sm text-gray-500 space-y-1">
+                <p>• Is the spelling of your search term correct?</p>
+                <p>
+                  • Try a less specific search term. That might yield more
+                  results.
+                </p>
+                <p>
+                  •{" "}
+                  <Link
+                    href="/categories"
+                    onClick={onClose}
+                    className="text-blue-600 hover:underline"
+                  >
+                    Back to previous search results
+                  </Link>
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
       );
     } catch (error) {
       console.error('Error rendering no results section:', error);
@@ -807,156 +802,155 @@ const SearchResultsGrid = React.memo(function SearchResultsGrid({ query, onClose
             return field;
           };
 
-        const displayPrice =
-          extractValue(source?.discount_price) ||
-          extractValue(source?.price) ||
-          extractValue(source?.customerPrice) ||
-          null;
-        const hasDiscount = extractValue(source?.has_discount);
-        const stockTotal = extractValue(source?.stock_total) || 0;
-        const stockQuantity = extractValue(source?.stockQuantity) || 0;
+          const displayPrice =
+            extractValue(source?.discount_price) ||
+            extractValue(source?.price) ||
+            extractValue(source?.customerPrice) ||
+            null;
+          const hasDiscount = extractValue(source?.has_discount);
+          const stockTotal = extractValue(source?.stock_total) || 0;
+          const stockQuantity = extractValue(source?.stockQuantity) || 0;
 
-        return (
-          <Link
-            key={extractValue(source?.id) || index}
-            href={`/product/${extractValue(source?.slug)}`}
-            onClick={() => {
-              // Close the modal when product link is clicked
-              if (onClose) {
-                onClose();
-              }
-            }}
-          >
-            <div className="group cursor-pointer bg-[#F9F9F9] rounded-xl border border-gray-200 p-4 flex flex-col text-center hover:shadow-lg transition-all duration-200">
-              <div className="relative w-full aspect-square mb-4 rounded-lg overflow-hidden bg-white">
-                {(() => {
-                  const imageUrl = extractValue(source?.images?.[0]?.sourceUrl) ||
-                                  extractValue(source?.images?.[0]) ||
-                                  extractValue(source?.image?.sourceUrl);
+          return (
+            <Link
+              key={extractValue(source?.id) || index}
+              href={`/product/${extractValue(source?.slug)}`}
+              onClick={() => {
+                // Close the modal when product link is clicked
+                if (onClose) {
+                  onClose();
+                }
+              }}
+            >
+              <div className="group cursor-pointer bg-[#F9F9F9] rounded-xl border border-gray-200 p-4 flex flex-col text-center hover:shadow-lg transition-all duration-200">
+                <div className="relative w-full aspect-square mb-4 rounded-lg overflow-hidden bg-white">
+                  {(() => {
+                    const imageUrl = extractValue(source?.images?.[0]?.sourceUrl) ||
+                      extractValue(source?.images?.[0]) ||
+                      extractValue(source?.image?.sourceUrl);
 
-                  return imageUrl ? (
-                    <img
-                      src={String(imageUrl)}
-                      alt={String(extractValue(source?.name) || '')}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
-                      <span className="text-gray-400 text-sm">No image</span>
-                    </div>
-                  );
-                })()}
-              </div>
-              
-              {/* Color Display */}
-              {(() => {
-                const colors = extractValue(source?.attributes?.color);
-                const colorArray = Array.isArray(colors) ? colors : [];
-
-                return colorArray.length > 0 ? (
-                  <div className="mb-2 flex space-x-2">
-                    {colorArray.slice(0, 5).map((colorName, idx) => {
-                      const safeColorName = String(extractValue(colorName) || '');
-                      const colorValue = COLOR_NAME_TO_VALUE[safeColorName] || "#CCCCCC";
-                      const isMulticolor = String(colorValue).includes('gradient');
-                      return (
-                        <div
-                          key={idx}
-                          className="w-[18px] h-[18px] rounded-[6px] border border-gray-300 shadow-sm"
-                          style={isMulticolor ?
-                            { background: colorValue } :
-                            { backgroundColor: colorValue }
-                          }
-                          title={safeColorName}
-                        />
-                      );
-                    })}
-                    {colorArray.length > 5 && (
-                      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-200 border border-gray-300 text-xs text-gray-600">
-                        +{colorArray.length - 5}
+                    return imageUrl ? (
+                      <img
+                        src={String(imageUrl)}
+                        alt={String(extractValue(source?.name) || '')}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
+                        <span className="text-gray-400 text-sm">No image</span>
                       </div>
-                    )}
-                  </div>
-                ) : null;
-              })()}
-              
-              <div className="flex-1 text-left">
-                <h3 className="text-gray-900 font-semibold leading-[26px] text-lg mb-2 manrope-font">
-                  {highlightMatch(
-                    (() => {
-                      const title = extractValue(source?.title) || extractValue(source?.name) || '';
-                      return String(title).length > 40 ? String(title).slice(0, 40) + "..." : String(title);
-                    })(),
-                    query
-                  )}
-                </h3>
-                {displayPrice && (
-                  <div className="flex items-center gap-2 mb-2">
-                    {hasDiscount && source?.price && (
-                      <span className="text-gray-400 line-through text-sm">
-                        €{parseFloat(extractValue(source.price)).toFixed(2)}
-                      </span>
-                    )}
-                    <span className="text-[#FF7700] text-lg font-semibold">
-                      €{parseFloat(displayPrice).toFixed(2)}
-                    </span>
-                  </div>
-                )}
-                <div className="flex items-center mb-2 font-bold text-gray-500 leading-[18px] text-[13px] manrope-font">
-                  <div
-                    className={`w-3 h-3 ${
-                      stockTotal > 0 || stockQuantity > 0
-                        ? "bg-green-500"
-                        : "bg-red-500"
-                    } rounded-full mr-2`}
-                  ></div>
-                  {stockTotal > 0 || stockQuantity > 0
-                    ? `In stock: (${stockTotal || stockQuantity})`
-                    : "Out of stock"}
+                    );
+                  })()}
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleWishlist({
-                      id: extractValue(source?.id),
-                      name: extractValue(source?.name),
-                      slug: extractValue(source?.slug),
-                      price: displayPrice,
-                      image: source?.images?.[0] || source?.image,
-                    })(e);
-                  }}
-                  className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-sm hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
-                >
-                  <FiHeart className="w-4 h-4 text-gray-600 hover:text-red-500" />
-                </button>
+
+                {/* Color Display */}
+                {(() => {
+                  const colors = extractValue(source?.attributes?.color);
+                  const colorArray = Array.isArray(colors) ? colors : [];
+
+                  return colorArray.length > 0 ? (
+                    <div className="mb-2 flex space-x-2">
+                      {colorArray.slice(0, 5).map((colorName, idx) => {
+                        const safeColorName = String(extractValue(colorName) || '');
+                        const colorValue = COLOR_NAME_TO_VALUE[safeColorName] || "#CCCCCC";
+                        const isMulticolor = String(colorValue).includes('gradient');
+                        return (
+                          <div
+                            key={idx}
+                            className="w-[18px] h-[18px] rounded-[6px] border border-gray-300 shadow-sm"
+                            style={isMulticolor ?
+                              { background: colorValue } :
+                              { backgroundColor: colorValue }
+                            }
+                            title={safeColorName}
+                          />
+                        );
+                      })}
+                      {colorArray.length > 5 && (
+                        <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-200 border border-gray-300 text-xs text-gray-600">
+                          +{colorArray.length - 5}
+                        </div>
+                      )}
+                    </div>
+                  ) : null;
+                })()}
+
+                <div className="flex-1 text-left">
+                  <h3 className="text-gray-900 font-semibold leading-[26px] text-lg mb-2 manrope-font">
+                    {highlightMatch(
+                      (() => {
+                        const title = extractValue(source?.title) || extractValue(source?.name) || '';
+                        return String(title).length > 40 ? String(title).slice(0, 40) + "..." : String(title);
+                      })(),
+                      query
+                    )}
+                  </h3>
+                  {displayPrice && (
+                    <div className="flex items-center gap-2 mb-2">
+                      {hasDiscount && source?.price && (
+                        <span className="text-gray-400 line-through text-sm">
+                          €{parseFloat(extractValue(source.price)).toFixed(2)}
+                        </span>
+                      )}
+                      <span className="text-[#FF7700] text-lg font-semibold">
+                        €{parseFloat(displayPrice).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-center mb-2 font-bold text-gray-500 leading-[18px] text-[13px] manrope-font">
+                    <div
+                      className={`w-3 h-3 ${stockTotal > 0 || stockQuantity > 0
+                          ? "bg-green-500"
+                          : "bg-red-500"
+                        } rounded-full mr-2`}
+                    ></div>
+                    {stockTotal > 0 || stockQuantity > 0
+                      ? `In stock: (${stockTotal || stockQuantity})`
+                      : "Out of stock"}
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleWishlist({
+                        id: extractValue(source?.id),
+                        name: extractValue(source?.name),
+                        slug: extractValue(source?.slug),
+                        price: displayPrice,
+                        image: source?.images?.[0] || source?.image,
+                      })(e);
+                    }}
+                    className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-sm hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    <FiHeart className="w-4 h-4 text-gray-600 hover:text-red-500" />
+                  </button>
+                </div>
               </div>
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Load more trigger */}
+      {hasMore && (
+        <div ref={loadMoreTriggerRef} className="py-8 flex justify-center">
+          {isLoadingMore ? (
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-gray-600">Loading more products...</span>
             </div>
-          </Link>
-        );
-      })}
+          ) : (
+            <div className="text-gray-400 text-sm">Scroll to load more</div>
+          )}
+        </div>
+      )}
+
+      {/* Show message when all results are loaded */}
+      {!hasMore && displayedResults.length > 0 && (
+        <div className="py-4 text-center text-gray-500 text-sm">
+          All {displayedResults.length} products loaded
+        </div>
+      )}
     </div>
-
-    {/* Load more trigger */}
-    {hasMore && (
-      <div ref={loadMoreTriggerRef} className="py-8 flex justify-center">
-        {isLoadingMore ? (
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-            <span className="text-gray-600">Loading more products...</span>
-          </div>
-        ) : (
-          <div className="text-gray-400 text-sm">Scroll to load more</div>
-        )}
-      </div>
-    )}
-
-    {/* Show message when all results are loaded */}
-    {!hasMore && displayedResults.length > 0 && (
-      <div className="py-4 text-center text-gray-500 text-sm">
-        All {displayedResults.length} products loaded
-      </div>
-    )}
-  </div>
   );
 });
 
@@ -1012,7 +1006,7 @@ const SearchModalContent = React.memo(function SearchModalContent({ query, onClo
   useEffect(() => {
     const fetchTopPicks = async () => {
       try {
-        const response = await fetch("https://react-backend.woth.gr/api/search-kit/_msearch", {
+        const response = await fetch("https://react-backend.woth.gr/api/search-kit/msearch", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -1020,7 +1014,7 @@ const SearchModalContent = React.memo(function SearchModalContent({ query, onClo
           body: JSON.stringify({
             requests: [
               {
-                indexName: "woocommerce_products_2025-08-28_23-38",
+                indexName: "woocommerce_products_all",
                 params: {
                   query: "",
                   hitsPerPage: 4,
@@ -1037,7 +1031,7 @@ const SearchModalContent = React.memo(function SearchModalContent({ query, onClo
 
         const data = await response.json();
         const products = data.results?.[0]?.hits || [];
-        
+
         if (products.length > 0) {
           setTopPicks(products.map(hit => ({
             ...hit,
@@ -1129,7 +1123,7 @@ const SearchModalContent = React.memo(function SearchModalContent({ query, onClo
                   <div className="w-full lg:w-2/3">
                     <div className="flex items-center mb-2">
                       <h6 className="text-[16px] leading-[18px] font-medium flex items-center gap-4 manrope-font text-[#3f3f3f]">
-                      Popular Categories
+                        Popular Categories
                       </h6>
                     </div>
                     {topPicksLoading ? (
@@ -1201,7 +1195,7 @@ const SearchModalContent = React.memo(function SearchModalContent({ query, onClo
 
   // Fallback - should not reach here
   return null;
-  
+
 });
 
 // Configure component that uses price range
@@ -1254,7 +1248,7 @@ const SearchModal = React.memo(function SearchModal({ query, onClose, onSearch }
     <PriceRangeContext.Provider value={{ priceRange, setPriceRange }}>
       <InstantSearch
         searchClient={searchClient}
-        indexName="woocommerce_products_2025-08-28_23-38"
+        indexName="woocommerce_products_all"
       >
         <SearchConfigure />
         <SearchBoxConnector query={debouncedQuery} />

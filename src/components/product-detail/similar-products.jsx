@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist, removeFromWishlist } from '@/store/wishlistSlice';
 
 const searchClient = Client({
-  url: '/api/search-kit/_msearch',
+  url: '/api/search-kit/msearch',
   headers: {
     'Content-Type': 'application/json'
   }
@@ -19,12 +19,12 @@ function SimilarProductsContent({ currentProductId, categoryName }) {
   const { hits } = useHits();
   const dispatch = useDispatch();
   const wishlist = useSelector(state => state.wishlist.items);
-  
+
   // Use refinement list to filter by category
   const { refine, items } = useRefinementList({
     attribute: 'productCategories.nodes.name'
   });
-  
+
   // Apply category filter when component mounts
   useEffect(() => {
     if (categoryName) {
@@ -137,24 +137,24 @@ export default function SimilarProducts({ product }) {
 
   // Get the first category name for filtering
   const categoryName = product.productCategories.nodes[0]?.name;
-  
+
   if (!categoryName) {
     return null;
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <InstantSearch 
-        searchClient={searchClient} 
-        indexName="woocommerce_products_2025-08-28_23-38"
+      <InstantSearch
+        searchClient={searchClient}
+        indexName="woocommerce_products_all"
       >
         {/* Configure search settings */}
-        <Configure 
+        <Configure
           hitsPerPage={8}
           facets={['productCategories.nodes.name']}
         />
-        
-        <SimilarProductsContent 
+
+        <SimilarProductsContent
           currentProductId={product.id}
           categoryName={categoryName}
         />

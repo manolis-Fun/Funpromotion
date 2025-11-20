@@ -29,18 +29,18 @@ app.use(express.text({ limit: '50mb' }));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     timestamp: new Date().toISOString(),
-    elasticsearch: process.env.ELASTICSEARCH_URL 
+    elasticsearch: process.env.ELASTICSEARCH_URL
   });
 });
 
 // Main search endpoint - exact replica of SearchKit functionality
-app.post('/api/search-kit/_msearch', async (req, res) => {
+app.post('/api/search-kit/msearch', async (req, res) => {
   try {
     let rawBody;
-    
+
     // Handle different content types
     if (typeof req.body === 'string') {
       rawBody = req.body;
@@ -54,27 +54,27 @@ app.post('/api/search-kit/_msearch', async (req, res) => {
     let parsedBody;
     let operations = [];
     let requestParams = []; // Store params for each request
-    
+
     try {
       parsedBody = JSON.parse(rawBody);
-      
+
       // Handle both array format and single object format
       const requests = Array.isArray(parsedBody) ? parsedBody : (parsedBody.requests || [parsedBody]);
-      
+
       for (const request of requests) {
-        const indexName = request.indexName || 'woocommerce_products_2025-08-28_23-38';
+        const indexName = request.indexName || 'woocommerce_products_all';
         const params = request.params || {};
         requestParams.push(params); // Store params for later use
-        
+
         console.log(`🔍 Processing request for index: ${indexName}`);
         console.log(`📋 Request params:`, JSON.stringify(params, null, 2));
-        
+
         // Add index header
         operations.push({ index: indexName });
-        
+
         // Build query
         let query = { match_all: {} };
-        
+
         if (params.query && params.query.trim()) {
           query = {
             multi_match: {
@@ -83,7 +83,7 @@ app.post('/api/search-kit/_msearch', async (req, res) => {
             }
           };
         }
-        
+
         // Add filters if present
         let filters = [];
         if (params.filters && params.filters.trim()) {
@@ -94,7 +94,7 @@ app.post('/api/search-kit/_msearch', async (req, res) => {
               const [field, value] = filter.split(':');
               const cleanField = field.trim();
               const cleanValue = value.replace(/"/g, '').trim();
-              
+
               // Handle numeric range filters (e.g., "price:1 TO 10")
               if (cleanValue.includes(' TO ')) {
                 const [minVal, maxVal] = cleanValue.split(' TO ').map(v => parseFloat(v.trim()));
@@ -110,7 +110,7 @@ app.post('/api/search-kit/_msearch', async (req, res) => {
                   continue;
                 }
               }
-              
+
               // Handle regular term filters
               // Add .keyword suffix for exact matching on text fields
               const fieldToUse = cleanField.includes('.') ? `${cleanField}.keyword` : cleanField;
@@ -120,7 +120,7 @@ app.post('/api/search-kit/_msearch', async (req, res) => {
             }
           }
         }
-        
+
         // Handle numericFilters (used by SearchKit for range refinements)
         if (params.numericFilters && Array.isArray(params.numericFilters)) {
           console.log('🔢 Processing numericFilters:', params.numericFilters);
@@ -161,14 +161,14 @@ app.post('/api/search-kit/_msearch', async (req, res) => {
             }
           }
         }
-        
+
         // Handle facetFilters (used by SearchKit for refinements) - CRITICAL FOR CATEGORY FILTERING
         if (params.facetFilters && Array.isArray(params.facetFilters)) {
           console.log('🎯 Processing facetFilters:', params.facetFilters);
-          
+
           // Group filters by attribute for proper OR logic
           const attributeGroups = {};
-          
+
           for (const facetFilterGroup of params.facetFilters) {
             if (Array.isArray(facetFilterGroup)) {
               // Handle array of arrays format - each sub-array is an OR group
@@ -180,7 +180,7 @@ app.post('/api/search-kit/_msearch', async (req, res) => {
                   term: { [fieldToUse]: value.trim() }
                 };
               });
-              
+
               if (orFilters.length === 1) {
                 filters.push(orFilters[0]);
               } else if (orFilters.length > 1) {
@@ -195,9 +195,9 @@ app.post('/api/search-kit/_msearch', async (req, res) => {
               const [field, value] = facetFilterGroup.split(':');
               const fieldKey = field.trim();
               const fieldToUse = `${fieldKey}.keyword`;
-              
+
               console.log(`🎯 Facet Filter: ${fieldToUse} = ${value.trim()}`);
-              
+
               if (!attributeGroups[fieldKey]) {
                 attributeGroups[fieldKey] = [];
               }
@@ -206,7 +206,7 @@ app.post('/api/search-kit/_msearch', async (req, res) => {
               });
             }
           }
-          
+
           // Convert grouped attributes to OR filters
           for (const [attribute, termFilters] of Object.entries(attributeGroups)) {
             if (termFilters.length === 1) {
@@ -220,7 +220,7 @@ app.post('/api/search-kit/_msearch', async (req, res) => {
             }
           }
         }
-        
+
         // Build final query with filters
         let finalQuery = query;
         if (filters.length > 0) {
@@ -232,7 +232,7 @@ app.post('/api/search-kit/_msearch', async (req, res) => {
             }
           };
         }
-        
+
         // Build aggregations for facets
         let aggregations = {};
         if (params.facets && Array.isArray(params.facets)) {
@@ -240,7 +240,7 @@ app.post('/api/search-kit/_msearch', async (req, res) => {
           for (const facet of params.facets) {
             const aggName = facet.replace(/\./g, '_');
             let fieldName;
-            
+
             // Map facet fields to their correct Elasticsearch field names
             switch (facet) {
               case 'productCategories.nodes.name':
@@ -265,7 +265,7 @@ app.post('/api/search-kit/_msearch', async (req, res) => {
                 fieldName = `${facet}.keyword`;
                 break;
             }
-            
+
             aggregations[aggName] = {
               terms: {
                 field: fieldName,
@@ -274,26 +274,26 @@ app.post('/api/search-kit/_msearch', async (req, res) => {
             };
           }
         }
-        
+
         // Add search body
         const searchBody = {
           query: finalQuery,
           size: params.hitsPerPage || 20,
           from: params.page ? params.page * (params.hitsPerPage || 20) : 0
         };
-        
+
         if (Object.keys(aggregations).length > 0) {
           searchBody.aggs = aggregations;
         }
-        
+
         console.log('🚀 Final search body:', JSON.stringify(searchBody, null, 2));
         operations.push(searchBody);
       }
-      
+
     } catch (e) {
       console.log('⚠️ Parsing fallback for raw body format');
       if (!rawBody || rawBody.trim().length === 0) {
-        rawBody = `{"index":"woocommerce_products_2025-08-28_23-38"}\n{"query":{"match_all":{}},"size":10}\n`;
+        rawBody = `{"index":"woocommerce_products_all"}\n{"query":{"match_all":{}},"size":10}\n`;
       }
 
       if (!rawBody.endsWith('\n')) {
@@ -301,14 +301,14 @@ app.post('/api/search-kit/_msearch', async (req, res) => {
       }
 
       const lines = rawBody.split('\n').filter(line => line.length > 0);
-      
+
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        
+
         if (!line || line.trim() === '') {
           continue;
         }
-        
+
         try {
           const parsed = JSON.parse(line);
           operations.push(parsed);
@@ -320,8 +320,8 @@ app.post('/api/search-kit/_msearch', async (req, res) => {
 
     if (operations.length === 0 || operations.length % 2 !== 0) {
       operations.length = 0;
-      operations.push({ index: 'woocommerce_products_2025-08-28_23-38' });
-      operations.push({ 
+      operations.push({ index: 'woocommerce_products_all' });
+      operations.push({
         query: { match_all: {} },
         size: 10,
         from: 0
@@ -339,7 +339,7 @@ app.post('/api/search-kit/_msearch', async (req, res) => {
     const transformedResponse = {
       results: result.responses.map((response, index) => {
         const params = requestParams[Math.floor(index / 2)] || {}; // Each request generates 2 operations
-        
+
         if (response.error) {
           console.log('❌ Elasticsearch error:', response.error);
           return {
@@ -392,46 +392,46 @@ app.post('/api/search-kit/_msearch', async (req, res) => {
             // Manually build facets from document data if aggregations are empty
             const searchRequest = operations[index * 2 + 1]; // Get corresponding search body
             if (searchRequest && searchRequest.aggs) {
-              
+
               // Handle category facets
               const categoryFacetRequested = Object.keys(searchRequest.aggs || {}).includes('productCategories_nodes_name');
               const categoryAggregation = response.aggregations?.productCategories_nodes_name;
               const categoryIsEmpty = !categoryAggregation || (categoryAggregation.buckets && categoryAggregation.buckets.length === 0);
-              
+
               if (categoryFacetRequested && categoryIsEmpty) {
                 const categoryFacets = {};
-                
+
                 hits.forEach(hit => {
                   const source = hit._source || hit;
                   const categories = source.productCategories?.nodes || [];
-                  
+
                   categories.forEach(category => {
                     if (category.name) {
                       categoryFacets[category.name] = (categoryFacets[category.name] || 0) + 1;
                     }
                   });
                 });
-                
+
                 facets['productCategories.nodes.name'] = categoryFacets;
                 console.log('🏷️ Built category facets from hits:', categoryFacets);
               }
 
               // Handle attribute facets (color, material, position, technique)
               const attributeFacets = ['attributes_color', 'attributes_material', 'attributes_position', 'attributes_technique'];
-              
+
               attributeFacets.forEach(facetKey => {
                 const facetRequested = Object.keys(searchRequest.aggs || {}).includes(facetKey);
                 const aggregation = response.aggregations?.[facetKey];
                 const isEmpty = !aggregation || (aggregation.buckets && aggregation.buckets.length === 0);
-                
+
                 if (facetRequested && isEmpty) {
                   const attributeFacetData = {};
                   const attributeName = facetKey.replace('attributes_', '');
-                  
+
                   hits.forEach(hit => {
                     const source = hit._source || hit;
                     const attributeValues = source.attributes?.[attributeName] || [];
-                    
+
                     // Handle both array and single values
                     const values = Array.isArray(attributeValues) ? attributeValues : [attributeValues];
                     values.forEach(value => {
@@ -440,12 +440,12 @@ app.post('/api/search-kit/_msearch', async (req, res) => {
                       }
                     });
                   });
-                  
+
                   facets[facetKey.replace('_', '.')] = attributeFacetData;
                 }
               });
             }
-            
+
             return facets;
           })(),
           facets_stats: {},
@@ -460,7 +460,7 @@ app.post('/api/search-kit/_msearch', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Search error:', error);
-    
+
     if (error.meta?.body?.error) {
       return res.status(error.statusCode || 500).json({
         error: error.meta.body.error.type,
@@ -478,14 +478,14 @@ app.post('/api/search-kit/_msearch', async (req, res) => {
 });
 
 // Handle preflight requests
-app.options('/api/search-kit/_msearch', (req, res) => {
+app.options('/api/search-kit/msearch', (req, res) => {
   res.status(200).end();
 });
 
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Standalone SearchKit server running on http://localhost:${PORT}`);
-  console.log(`📍 Search endpoint: http://localhost:${PORT}/api/search-kit/_msearch`);
+  console.log(`📍 Search endpoint: http://localhost:${PORT}/api/search-kit/msearch`);
   console.log(`💡 Health check: http://localhost:${PORT}/health`);
   console.log(`🔌 Elasticsearch: ${process.env.ELASTICSEARCH_URL}`);
 });

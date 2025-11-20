@@ -13,7 +13,7 @@ import TopPickCards from '@/components/product-category/top-pick-cards';
 import SortDropdown from '@/components/common/SortDropdown';
 
 const searchClient = Client({
-  url: '/api/search-kit/_msearch',
+  url: '/api/search-kit/msearch',
   headers: {
     'Content-Type': 'application/json'
   }
@@ -171,41 +171,41 @@ export default function ProductCategoryClient({ slug }) {
 
       const data = await response.json();
       // Transform API response to match expected format
-   const transformedProducts = Array.isArray(data?.hits)
-  ? data.hits.map(hit => {
-      // pick a display image
-      const firstImage =
-        Array.isArray(hit.images) && hit.images.length > 0
-          ? hit.images[0]
-          : '/images/placeholder.jpg';
+      const transformedProducts = Array.isArray(data?.hits)
+        ? data.hits.map(hit => {
+          // pick a display image
+          const firstImage =
+            Array.isArray(hit.images) && hit.images.length > 0
+              ? hit.images[0]
+              : '/images/placeholder.jpg';
 
-      return {
-        id: hit.id ?? hit.product_code,              // stable id from API
-        name: hit.name,
-        title: hit.name,
-        price: typeof hit.price === 'number' ? hit.price : Number(hit.price ?? 0),
-        discount_price: hit.discount_price ?? null,
-        has_discount: !!hit.has_discount,
-        image: { sourceUrl: firstImage },
-        images: (
-          Array.isArray(hit.images) && hit.images.length > 0
-            ? hit.images.map(src => ({ sourceUrl: src }))
-            : [{ sourceUrl: '/images/placeholder.jpg' }]
-        ),
-        slug: hit.slug ?? String(hit.id ?? hit.base_number ?? ''),
-        stockQuantity: hit.stock_total ?? 0,
-        category: hit.category,
-        brand: hit.brand ?? '',
-        base_number: hit.base_number ?? '',
-        supplierCode: hit.supplierCode ?? '',
-        attributes: {
-          color: Array.isArray(hit.colors) ? hit.colors : [],
-          material: hit.material ? [hit.material] : [],
-          technique: hit.technique ? [hit.technique] : []
-        }
-      };
-    })
-  : [];
+          return {
+            id: hit.id ?? hit.product_code,              // stable id from API
+            name: hit.name,
+            title: hit.name,
+            price: typeof hit.price === 'number' ? hit.price : Number(hit.price ?? 0),
+            discount_price: hit.discount_price ?? null,
+            has_discount: !!hit.has_discount,
+            image: { sourceUrl: firstImage },
+            images: (
+              Array.isArray(hit.images) && hit.images.length > 0
+                ? hit.images.map(src => ({ sourceUrl: src }))
+                : [{ sourceUrl: '/images/placeholder.jpg' }]
+            ),
+            slug: hit.slug ?? String(hit.id ?? hit.base_number ?? ''),
+            stockQuantity: hit.stock_total ?? 0,
+            category: hit.category,
+            brand: hit.brand ?? '',
+            base_number: hit.base_number ?? '',
+            supplierCode: hit.supplierCode ?? '',
+            attributes: {
+              color: Array.isArray(hit.colors) ? hit.colors : [],
+              material: hit.material ? [hit.material] : [],
+              technique: hit.technique ? [hit.technique] : []
+            }
+          };
+        })
+        : [];
       setProducts(transformedProducts);
 
       // Set total product count and calculate pagination
@@ -262,7 +262,7 @@ export default function ProductCategoryClient({ slug }) {
     <section>
       <InstantSearch
         searchClient={searchClient}
-        indexName="woocommerce_products_2025-08-28_23-38"
+        indexName="woocommerce_products_all"
       >
         <PriceFilterProvider>
           {/* Category Banner */}

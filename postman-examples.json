@@ -13,9 +13,14 @@
         "url": {
           "raw": "http://localhost:3000/api/search?q=mug&page=1&size=12",
           "protocol": "http",
-          "host": ["localhost"],
+          "host": [
+            "localhost"
+          ],
           "port": "3000",
-          "path": ["api", "search"],
+          "path": [
+            "api",
+            "search"
+          ],
           "query": [
             {
               "key": "q",
@@ -44,9 +49,14 @@
         "url": {
           "raw": "http://localhost:3000/api/search?q=promotional&category=mugs&brand=brandname&min_price=5&max_price=50&colors=red,blue&sort=price_asc&page=1&size=20",
           "protocol": "http",
-          "host": ["localhost"],
+          "host": [
+            "localhost"
+          ],
           "port": "3000",
-          "path": ["api", "search"],
+          "path": [
+            "api",
+            "search"
+          ],
           "query": [
             {
               "key": "q",
@@ -117,9 +127,14 @@
         "url": {
           "raw": "http://localhost:3000/api/search",
           "protocol": "http",
-          "host": ["localhost"],
+          "host": [
+            "localhost"
+          ],
           "port": "3000",
-          "path": ["api", "search"]
+          "path": [
+            "api",
+            "search"
+          ]
         }
       }
     },
@@ -140,9 +155,14 @@
         "url": {
           "raw": "http://localhost:3000/api/search",
           "protocol": "http",
-          "host": ["localhost"],
+          "host": [
+            "localhost"
+          ],
           "port": "3000",
-          "path": ["api", "search"]
+          "path": [
+            "api",
+            "search"
+          ]
         }
       }
     },
@@ -161,11 +181,17 @@
           "raw": "{\"index\": \"woocommerce_products_2025-08-09_09-19\"}\n{\"query\": {\"bool\": {\"must\": [{\"multi_match\": {\"query\": \"mug\", \"fields\": [\"title^3\", \"singleProductFields.brand^2\"]}}]}}, \"size\": 10}\n{\"index\": \"woocommerce_products_2025-08-09_09-19\"}\n{\"aggs\": {\"categories\": {\"nested\": {\"path\": \"productCategories.nodes\"}, \"aggs\": {\"category_names\": {\"terms\": {\"field\": \"productCategories.nodes.name.keyword\", \"size\": 20}}}}}}"
         },
         "url": {
-          "raw": "http://localhost:3000/api/search-kit/_msearch",
+          "raw": "http://localhost:3000/api/search-kit/msearch",
           "protocol": "http",
-          "host": ["localhost"],
+          "host": [
+            "localhost"
+          ],
           "port": "3000",
-          "path": ["api", "search-kit", "_msearch"]
+          "path": [
+            "api",
+            "search-kit",
+            "_msearch"
+          ]
         }
       }
     },
@@ -177,9 +203,14 @@
         "url": {
           "raw": "http://localhost:3000/api/search?page=1&size=12&sort=relevant",
           "protocol": "http",
-          "host": ["localhost"],
+          "host": [
+            "localhost"
+          ],
           "port": "3000",
-          "path": ["api", "search"],
+          "path": [
+            "api",
+            "search"
+          ],
           "query": [
             {
               "key": "page",
@@ -206,9 +237,14 @@
         "url": {
           "raw": "http://localhost:3000/api/search?brand=Nike&sort=price_desc&size=24",
           "protocol": "http",
-          "host": ["localhost"],
+          "host": [
+            "localhost"
+          ],
           "port": "3000",
-          "path": ["api", "search"],
+          "path": [
+            "api",
+            "search"
+          ],
           "query": [
             {
               "key": "brand",
@@ -244,9 +280,14 @@
         "url": {
           "raw": "http://localhost:3000/api/search",
           "protocol": "http",
-          "host": ["localhost"],
+          "host": [
+            "localhost"
+          ],
           "port": "3000",
-          "path": ["api", "search"]
+          "path": [
+            "api",
+            "search"
+          ]
         }
       }
     }

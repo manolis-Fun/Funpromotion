@@ -13,18 +13,18 @@ import { COLOR_NAME_TO_VALUE } from "@/constants/colors";
 // Context for managing price filtered results
 const PriceFilterContext = createContext({
     priceFilteredResults: null,
-    setPriceFilteredResults: () => {},
+    setPriceFilteredResults: () => { },
     priceRange: null,
-    setPriceRange: () => {},
+    setPriceRange: () => { },
     isFiltering: false,
-    setIsFiltering: () => {}
+    setIsFiltering: () => { }
 });
 
 export const PriceFilterProvider = ({ children }) => {
     const [priceFilteredResults, setPriceFilteredResults] = useState(null);
     const [priceRange, setPriceRange] = useState(null);
     const [isFiltering, setIsFiltering] = useState(false);
-    
+
     return (
         <PriceFilterContext.Provider value={{
             priceFilteredResults,
@@ -62,7 +62,7 @@ const CustomPrintingTechnique = () => {
 
     // Define technique icons and styling
     const getTechniqueIcon = (technique) => {
-        switch(technique.toLowerCase()) {
+        switch (technique.toLowerCase()) {
             case '1-color':
             case '1 color':
                 return (
@@ -105,7 +105,7 @@ const CustomPrintingTechnique = () => {
                 return (
                     <div className="w-5 h-5 flex items-center justify-center">
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2L13.09 8.26L22 9L13.09 9.74L12 16L10.91 9.74L2 9L10.91 8.26L12 2Z"/>
+                            <path d="M12 2L13.09 8.26L22 9L13.09 9.74L12 16L10.91 9.74L2 9L10.91 8.26L12 2Z" />
                         </svg>
                     </div>
                 );
@@ -118,7 +118,7 @@ const CustomPrintingTechnique = () => {
 
     const formatTechniqueName = (technique) => {
         // Format the technique name to match screenshot
-        switch(technique.toLowerCase()) {
+        switch (technique.toLowerCase()) {
             case '1-color':
             case '1 color':
                 return '1 color';
@@ -148,25 +148,22 @@ const CustomPrintingTechnique = () => {
                 <div
                     key={item.value}
                     onClick={(e) => handleTechniqueClick(item.value, e)}
-                    className={`flex items-center justify-between cursor-pointer py-2 px-1 rounded-lg transition-colors ${
-                        item.isRefined
+                    className={`flex items-center justify-between cursor-pointer py-2 px-1 rounded-lg transition-colors ${item.isRefined
                             ? 'bg-orange-50'
                             : 'hover:bg-gray-50'
-                    }`}
+                        }`}
                 >
                     <div className="flex items-center gap-3">
                         {getTechniqueIcon(item.value)}
-                        <span className={`text-sm ${
-                            item.isRefined ? 'text-gray-700 font-medium' : 'text-gray-600'
-                        }`}>
+                        <span className={`text-sm ${item.isRefined ? 'text-gray-700 font-medium' : 'text-gray-600'
+                            }`}>
                             {formatTechniqueName(item.value)}
                         </span>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                        item.isRefined 
-                            ? 'bg-orange-500 text-white font-medium' 
+                    <span className={`text-xs px-2 py-1 rounded-full ${item.isRefined
+                            ? 'bg-orange-500 text-white font-medium'
                             : 'bg-gray-100 text-gray-500'
-                    }`}>
+                        }`}>
                         {item.count}
                     </span>
                 </div>
@@ -179,11 +176,11 @@ const CustomPrintingTechnique = () => {
 export const useEffectiveResults = () => {
     const { results } = useInstantSearch();
     const { priceFilteredResults, isFiltering } = usePriceFilter();
-    
+
     // Always use SearchKit results unless we have price filtering active with no other filters
     // This ensures SearchKit filters (color, technique, etc.) always work
     const shouldUsePriceFiltered = isFiltering && priceFilteredResults;
-    
+
     return {
         results: shouldUsePriceFiltered ? priceFilteredResults : results,
         isFiltered: shouldUsePriceFiltered,
@@ -199,7 +196,7 @@ function ColorFilter() {
 
     // Add safety checks
     const items = refinementList?.items || [];
-    const refine = refinementList?.refine || (() => {});
+    const refine = refinementList?.refine || (() => { });
 
     // Handle color click with proper event handling
     const handleColorClick = useCallback((value, e) => {
@@ -254,37 +251,37 @@ function ColorFilter() {
 function PriceRangeFilter() {
     const { results, uiState } = useInstantSearch();
     const { setPriceFilteredResults, priceRange, setPriceRange, setIsFiltering } = usePriceFilter();
-    
-    
+
+
     // Add safety checks for results
     if (!results || !results.hits || !Array.isArray(results.hits)) {
         return null;
     }
-    
+
     // Extract products from _source
     const products = results.hits.map(hit => hit._source || hit);
-    
+
     // Calculate min and max prices from products
     const priceData = useMemo(() => {
         if (!products.length) return { minPrice: 0, maxValue: 1000, prices: [] };
-        
+
         const prices = products.map(p => {
             // Try multiple price fields
-            const price = p?.singleProductFields?.priceMainSale || 
-                         p?.singleProductFields?.priceMain || 
-                         p?.price ||
-                         p?.regularPrice ||
-                         p?.salePrice;
-            
+            const price = p?.singleProductFields?.priceMainSale ||
+                p?.singleProductFields?.priceMain ||
+                p?.price ||
+                p?.regularPrice ||
+                p?.salePrice;
+
             if (typeof price === 'string') {
                 const numPrice = parseFloat(price.replace(/[^0-9.-]+/g, ''));
                 return isNaN(numPrice) ? null : numPrice;
             }
             return typeof price === 'number' ? price : null;
         }).filter(p => p !== null && p >= 0);
-        
+
         if (!prices.length) return { minPrice: 0, maxValue: 1000, prices: [] };
-        
+
         return {
             minPrice: Math.floor(Math.min(...prices)),
             maxValue: Math.ceil(Math.max(...prices)),
@@ -294,12 +291,12 @@ function PriceRangeFilter() {
 
     // Handle range change with context integration
     const handleRangeChange = useCallback(async (newRange) => {
-        
+
         // Ensure newRange is an array with two values
         if (!Array.isArray(newRange) || newRange.length !== 2) {
             return;
         }
-        
+
         // If range is the full range, clear the filter
         if (newRange[0] === priceData.minPrice && newRange[1] === priceData.maxValue) {
             setPriceFilteredResults(null);
@@ -307,20 +304,20 @@ function PriceRangeFilter() {
             setIsFiltering(false);
             return;
         }
-        
+
         setIsFiltering(true);
         setPriceRange(newRange);
-        
+
         // Build numeric filters in Algolia format
         const numericFilters = [
             `price>=${newRange[0]}`,
             `price<=${newRange[1]}`
         ];
-        
+
         // Get current SearchKit filters from uiState
-        const currentIndexState = uiState['woocommerce_products_2025-08-28_23-38'] || {};
+        const currentIndexState = uiState['woocommerce_products_all'] || {};
         const facetFilters = [];
-        
+
         // Add refinement list filters
         if (currentIndexState.refinementList) {
             Object.entries(currentIndexState.refinementList).forEach(([attribute, values]) => {
@@ -331,14 +328,14 @@ function PriceRangeFilter() {
                 }
             });
         }
-        
+
         try {
             const requestBody = [{
-                indexName: 'woocommerce_products_2025-08-28_23-38',
+                indexName: 'woocommerce_products_all',
                 params: {
                     facets: [
                         'attributes.color',
-                        'attributes.material', 
+                        'attributes.material',
                         'attributes.position',
                         'attributes.technique',
                         'price',
@@ -351,23 +348,23 @@ function PriceRangeFilter() {
                     query: ''
                 }
             }];
-            
-            
-            const response = await fetch('/api/search-kit/_msearch', {
+
+
+            const response = await fetch('/api/search-kit/msearch', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(requestBody)
             });
-            
+
             const data = await response.json();
-            
+
             // Store filtered results in context
             if (data?.results?.[0]) {
                 setPriceFilteredResults(data.results[0]);
             }
-            
+
         } catch (error) {
             setIsFiltering(false);
         }
@@ -410,10 +407,10 @@ function SearchKitCategories() {
 
 
     // Show SearchKit items as categories
-    const categoriesToShow = items.map(item => ({ 
-        name: item.label, 
+    const categoriesToShow = items.map(item => ({
+        name: item.label,
         slug: item.value.toLowerCase().replace(/\s+/g, '-'),
-        count: item.count 
+        count: item.count
     }));
 
     if (categoriesToShow.length === 0) {
@@ -427,14 +424,13 @@ function SearchKitCategories() {
                 {categoriesToShow.map(c => {
                     // Check if this category is currently refined (for SearchKit items)
                     const isRefined = items.some(item => item.label === c.name && item.isRefined);
-                    
+
                     return (
                         <li key={c.name || c.slug} className="flex justify-between items-center py-1">
-                            <Link 
+                            <Link
                                 href={`/product-category/${c.slug}`}
-                                className={`text-left text-gray-600 hover:text-gray-800 transition-colors block flex-1 text-sm ${
-                                    isRefined ? 'text-gray-800 font-medium' : ''
-                                }`}
+                                className={`text-left text-gray-600 hover:text-gray-800 transition-colors block flex-1 text-sm ${isRefined ? 'text-gray-800 font-medium' : ''
+                                    }`}
                             >
                                 {c.name}
                             </Link>
@@ -533,7 +529,7 @@ function SidebarSkeleton() {
 
 export default function SearchKitSidebar() {
     const { status } = useInstantSearch();
-    
+
     // Show skeleton during initial load
     if (status === 'loading' || status === 'stalled') {
         return <SidebarSkeleton />;
