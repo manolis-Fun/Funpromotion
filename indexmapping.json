@@ -1,0 +1,440 @@
+{
+    "woocommerce_products_2025-10-27_20-23": {
+        "aliases": {
+            "woocommerce_products_all": {}
+        },
+        "mappings": {
+            "properties": {
+                "all_text": {
+                    "type": "text",
+                    "analyzer": "woocommerce_analyzer"
+                },
+                "attributes": {
+                    "properties": {
+                        "brand": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 256
+                                }
+                            }
+                        },
+                        "color": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 256
+                                }
+                            }
+                        },
+                        "extra": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 256
+                                }
+                            }
+                        },
+                        "material": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 256
+                                }
+                            }
+                        },
+                        "position": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 256
+                                }
+                            }
+                        },
+                        "size": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 256
+                                }
+                            }
+                        },
+                        "supplier-color": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 256
+                                }
+                            }
+                        },
+                        "technique": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 256
+                                }
+                            }
+                        }
+                    }
+                },
+                "categories_text": {
+                    "type": "text",
+                    "analyzer": "woocommerce_analyzer"
+                },
+                "customerPrice": {
+                    "type": "keyword"
+                },
+                "description": {
+                    "type": "text",
+                    "analyzer": "woocommerce_analyzer"
+                },
+                "dimensions": {
+                    "properties": {
+                        "height": {
+                            "type": "float"
+                        },
+                        "length": {
+                            "type": "float"
+                        },
+                        "width": {
+                            "type": "float"
+                        }
+                    }
+                },
+                "galleryImages": {
+                    "type": "keyword",
+                    "index": false
+                },
+                "id": {
+                    "type": "keyword"
+                },
+                "image": {
+                    "properties": {
+                        "altText": {
+                            "type": "text",
+                            "analyzer": "woocommerce_analyzer"
+                        },
+                        "sourceUrl": {
+                            "type": "keyword",
+                            "index": false
+                        }
+                    }
+                },
+                "images": {
+                    "type": "keyword",
+                    "index": false
+                },
+                "manageStock": {
+                    "type": "boolean"
+                },
+                "post_date": {
+                    "type": "date"
+                },
+                "post_modified": {
+                    "type": "date"
+                },
+                "post_status": {
+                    "type": "keyword"
+                },
+                "price": {
+                    "type": "float"
+                },
+                "priceMain": {
+                    "type": "float"
+                },
+                "priceMainSale": {
+                    "type": "float"
+                },
+                "printingOptions": {
+                    "type": "nested",
+                    "properties": {
+                        "available": {
+                            "type": "boolean"
+                        },
+                        "type": {
+                            "type": "keyword"
+                        }
+                    }
+                },
+                "productCategories": {
+                    "type": "nested",
+                    "properties": {
+                        "nodes": {
+                            "type": "nested",
+                            "properties": {
+                                "name": {
+                                    "type": "text",
+                                    "fields": {
+                                        "keyword": {
+                                            "type": "keyword"
+                                        }
+                                    },
+                                    "analyzer": "woocommerce_analyzer"
+                                },
+                                "slug": {
+                                    "type": "keyword"
+                                }
+                            }
+                        }
+                    }
+                },
+                "shortDescription": {
+                    "type": "text",
+                    "analyzer": "woocommerce_analyzer"
+                },
+                "singleProductFields": {
+                    "properties": {
+                        "brand": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword"
+                                }
+                            },
+                            "analyzer": "woocommerce_analyzer"
+                        },
+                        "manipulation": {
+                            "type": "keyword"
+                        },
+                        "priceMain": {
+                            "type": "float"
+                        },
+                        "priceMainSale": {
+                            "type": "float"
+                        },
+                        "v1W1": {
+                            "type": "keyword"
+                        }
+                    }
+                },
+                "slug": {
+                    "type": "keyword",
+                    "fields": {
+                        "text": {
+                            "type": "text",
+                            "analyzer": "woocommerce_analyzer"
+                        }
+                    }
+                },
+                "stockQuantity": {
+                    "type": "integer"
+                },
+                "stockStatus": {
+                    "type": "keyword"
+                },
+                "supplierCode": {
+                    "type": "keyword",
+                    "fields": {
+                        "text": {
+                            "type": "text",
+                            "analyzer": "woocommerce_analyzer"
+                        }
+                    }
+                },
+                "title": {
+                    "type": "text",
+                    "fields": {
+                        "autocomplete": {
+                            "type": "text",
+                            "analyzer": "autocomplete_analyzer"
+                        },
+                        "keyword": {
+                            "type": "keyword"
+                        }
+                    },
+                    "analyzer": "woocommerce_analyzer"
+                },
+                "variations": {
+                    "type": "nested",
+                    "properties": {
+                        "attributes": {
+                            "dynamic": "true",
+                            "properties": {
+                                "extra": {
+                                    "type": "text",
+                                    "fields": {
+                                        "keyword": {
+                                            "type": "keyword",
+                                            "ignore_above": 256
+                                        }
+                                    }
+                                },
+                                "position": {
+                                    "type": "text",
+                                    "fields": {
+                                        "keyword": {
+                                            "type": "keyword",
+                                            "ignore_above": 256
+                                        }
+                                    }
+                                },
+                                "size": {
+                                    "type": "text",
+                                    "fields": {
+                                        "keyword": {
+                                            "type": "keyword",
+                                            "ignore_above": 256
+                                        }
+                                    }
+                                },
+                                "technique": {
+                                    "type": "text",
+                                    "fields": {
+                                        "keyword": {
+                                            "type": "keyword",
+                                            "ignore_above": 256
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "customerPrice": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 256
+                                }
+                            }
+                        },
+                        "dimensions": {
+                            "properties": {
+                                "height": {
+                                    "type": "text",
+                                    "fields": {
+                                        "keyword": {
+                                            "type": "keyword",
+                                            "ignore_above": 256
+                                        }
+                                    }
+                                },
+                                "length": {
+                                    "type": "text",
+                                    "fields": {
+                                        "keyword": {
+                                            "type": "keyword",
+                                            "ignore_above": 256
+                                        }
+                                    }
+                                },
+                                "width": {
+                                    "type": "text",
+                                    "fields": {
+                                        "keyword": {
+                                            "type": "keyword",
+                                            "ignore_above": 256
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "id": {
+                            "type": "keyword"
+                        },
+                        "price": {
+                            "type": "float"
+                        },
+                        "priceMain": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 256
+                                }
+                            }
+                        },
+                        "singleProductFields": {
+                            "properties": {
+                                "priceMain": {
+                                    "type": "text",
+                                    "fields": {
+                                        "keyword": {
+                                            "type": "keyword",
+                                            "ignore_above": 256
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "slug": {
+                            "type": "keyword"
+                        },
+                        "stockQuantity": {
+                            "type": "integer"
+                        },
+                        "supplierCode": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 256
+                                }
+                            }
+                        },
+                        "weight": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword",
+                                    "ignore_above": 256
+                                }
+                            }
+                        }
+                    }
+                },
+                "weight": {
+                    "type": "float"
+                }
+            }
+        },
+        "settings": {
+            "index": {
+                "routing": {
+                    "allocation": {
+                        "include": {
+                            "_tier_preference": "data_content"
+                        }
+                    }
+                },
+                "number_of_shards": "1",
+                "provided_name": "woocommerce_products_2025-10-27_20-23",
+                "creation_date": "1761592993745",
+                "analysis": {
+                    "analyzer": {
+                        "autocomplete_analyzer": {
+                            "filter": [
+                                "lowercase",
+                                "asciifolding"
+                            ],
+                            "type": "custom",
+                            "tokenizer": "keyword"
+                        },
+                        "woocommerce_analyzer": {
+                            "filter": [
+                                "lowercase",
+                                "asciifolding",
+                                "stop",
+                                "snowball"
+                            ],
+                            "type": "custom",
+                            "tokenizer": "standard"
+                        }
+                    }
+                },
+                "number_of_replicas": "0",
+                "uuid": "1nI09MqiQY6zkFdBo1h15Q",
+                "version": {
+                    "created": "9039001"
+                }
+            }
+        }
+    }
+}
