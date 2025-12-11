@@ -220,7 +220,7 @@ function buildElasticsearchQuery({ query, category, brand, minPrice, maxPrice, c
       nested: {
         path: "productCategories.nodes",
         query: {
-          term: { "productCategories.nodes.slug": category }
+          term: { "productCategories.nodes.slug.keyword": category }
         }
       }
     });
@@ -313,7 +313,7 @@ function buildAdvancedQuery(query, filters) {
       nested: {
         path: "productCategories.nodes",
         query: {
-          terms: { "productCategories.nodes.slug": filters.categories }
+          terms: { "productCategories.nodes.slug.keyword": filters.categories }
         }
       }
     });

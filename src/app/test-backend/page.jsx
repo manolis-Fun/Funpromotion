@@ -120,7 +120,7 @@ export default function TestBackend() {
         });
       };
 
-      addFacetValues('productCategories.nodes.name', categoryFilter);
+      addFacetValues('productCategories.nodes.slug', categoryFilter);
       addFacetValues('singleProductFields.brand', brandFilter);
       addFacetValues('attributes.color', colorFilter);
       addFacetValues('attributes.material', materialFilter);
@@ -149,7 +149,7 @@ export default function TestBackend() {
               hitsPerPage: sanitizedHitsPerPage,
               page: sanitizedPage,
               facets: [
-                "productCategories.nodes.name",
+                "productCategories.nodes.slug",
                 "singleProductFields.brand",
                 "attributes.color",
                 "attributes.material",
@@ -286,15 +286,15 @@ export default function TestBackend() {
             <h3 className="text-base font-semibold mb-4">Facet Filters (comma-separated)</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Categories</label>
+                <label className="block text-sm font-medium mb-2">Category Slugs</label>
                 <input
                   type="text"
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  placeholder="Διαφημιστικά στυλό, Διαφημιστικά Ρούχα"
+                  placeholder="diafimistika-stylo, diafimistika-rouxa"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <p className="text-xs text-gray-500 mt-1">Matches `productCategories.nodes.name`</p>
+                <p className="text-xs text-gray-500 mt-1">Matches `productCategories.nodes.slug`</p>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Brands</label>
@@ -547,6 +547,26 @@ export default function TestBackend() {
                         <span className="text-xs text-gray-500">Colors: {colorDisplay}</span>
                       </div>
                     )}
+
+                    {/* START: Inner Hits Display */}
+                    {hit.inner_hits && hit.inner_hits.variants && (
+                      <div className="mt-4 border-t pt-4">
+                        <h4 className="font-semibold text-sm mb-2">Available Variants:</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {hit.inner_hits.variants.hits.hits.map(variant => (
+                            <div key={variant._id} className="p-2 border rounded-md bg-gray-50 text-xs">
+                              <p><strong>SKU:</strong> {variant._source.supplierCode}</p>
+                              {variant._source.attributes && variant._source.attributes.color && (
+                                <p><strong>Color:</strong> {variant._source.attributes.color.join(', ')}</p>
+                              )}
+                              <p><strong>Stock:</strong> {variant._source.stockQuantity || 'N/A'}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* END: Inner Hits Display */}
+
                     <button
                       onClick={() => setSelectedHit(hit)}
                       className="mt-auto px-3 py-2 text-sm font-medium rounded-md border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors"

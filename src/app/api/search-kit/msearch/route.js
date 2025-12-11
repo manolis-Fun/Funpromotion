@@ -73,17 +73,12 @@ export async function POST(request) {
 
         // Helper to build term queries (handles nested fields)
         const buildTermQuery = (field, value) => {
-          if (field === 'productCategories.nodes.name' || field === 'productCategories.nodes.name.keyword') {
+          if (field === 'productCategories.nodes.slug') {
             return {
               nested: {
-                path: 'productCategories',
+                path: 'productCategories.nodes',
                 query: {
-                  nested: {
-                    path: 'productCategories.nodes',
-                    query: {
-                      term: { 'productCategories.nodes.name.keyword': value }
-                    }
-                  }
+                  term: { 'productCategories.nodes.slug.keyword': value }
                 }
               }
             };
@@ -237,8 +232,8 @@ export async function POST(request) {
 
             // Map facet fields to their correct Elasticsearch field names
             switch (facet) {
-              case 'productCategories.nodes.name':
-                fieldName = 'productCategories.nodes.name.keyword';
+              case 'productCategories.nodes.slug':
+                fieldName = 'productCategories.nodes.slug.keyword';
                 break;
               case 'attributes.color':
                 fieldName = 'attributes.color.keyword';  // Use keyword for aggregations
@@ -269,11 +264,26 @@ export async function POST(request) {
           }
         }
 
+        // Add cardinality aggregation to get the number of unique groups
+        aggregations['unique_products'] = {
+          cardinality: {
+            field: 'baseNumber.keyword'
+          }
+        };
+        
         // Add search body
         const searchBody = {
           query: finalQuery,
           size: params.hitsPerPage || 20,
-          from: params.page ? params.page * (params.hitsPerPage || 20) : 0
+          from: params.page ? params.page * (params.hitsPerPage || 20) : 0,
+          collapse: {
+            field: "baseNumber.keyword",
+            inner_hits: {
+              name: "variants",
+              size: 10,
+              sort: [{ "supplierCode.keyword": "asc" }]
+            }
+          }
         };
 
         if (Object.keys(aggregations).length > 0) {
@@ -342,7 +352,7 @@ export async function POST(request) {
         }
 
         const hits = response.hits?.hits || [];
-        const total = response.hits?.total?.value || response.hits?.total || 0;
+        const total = response.aggregations?.unique_products?.value || response.hits?.total?.value || response.hits?.total || 0;
         const hitsPerPage = operations[1]?.size || 20;
         const page = Math.floor((operations[1]?.from || 0) / hitsPerPage);
 
@@ -453,26 +463,15 @@ export async function POST(request) {
 
   } catch (error) {
 
-    if (error.meta?.body?.error) {
-      return new Response(JSON.stringify({
-        error: error.meta.body.error.type,
-        message: error.meta.body.error.reason,
-        status: error.statusCode
-      }), {
-        status: error.statusCode || 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      });
-    }
+    const errorResponse = {
+      error: error.meta?.body?.error?.type || 'Search failed',
+      message: error.meta?.body?.error?.reason || error.message,
+      details: error.meta?.body || (process.env.NODE_ENV === 'development' ? error.stack : undefined)
+    };
+    console.error('Full Elasticsearch Error:', JSON.stringify(errorResponse, null, 2));
 
-    return new Response(JSON.stringify({
-      error: 'Search failed',
-      message: error.message,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    }), {
-      status: 500,
+    return new Response(JSON.stringify(errorResponse), {
+      status: error.statusCode || 500,
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
